@@ -1,0 +1,18 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Runtime documents</title>
+<button id="popup">Open popup</button><button id="replace">Replace frame document</button>
+<iframe id="srcdoc" srcdoc="<!doctype html><button id='value' onclick='this.textContent=&quot;clicked&quot;'>initial</button>"></iframe>
+<script>
+window.restoredFromCache = false;
+window.addEventListener('pageshow', event => { window.restoredFromCache = event.persisted; });
+const content = '<!doctype html><title>Runtime popup</title><button id="value" onclick="this.textContent=\'clicked\'">replacement</button>';
+document.querySelector('#popup').onclick = () => {
+  const page = window.open('about:blank');
+  page.document.open(); page.document.write(content); page.document.close();
+};
+document.querySelector('#replace').onclick = () => {
+  const doc = document.querySelector('#srcdoc').contentDocument;
+  doc.open(); doc.write(content); doc.close();
+};
+</script>

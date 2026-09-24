@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "NodeNext",
+    "lib": [
+      "DOM",
+      "ESNext"
+    ],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "moduleResolution": "nodenext",
+    "forceConsistentCasingInFileNames": true,
+    "rootDir": "./internal/webassets/src",
+    "outDir": "./internal/webassets/generated/",
+    "declaration": false,
+    "sourceMap": false,
+    "removeComments": true,
+    "stripInternal": true,
+    "preserveConstEnums": true,
+    "ignoreDeprecations": "6.0",
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": [
+    "internal/webassets/src/**/*"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

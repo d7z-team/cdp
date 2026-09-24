@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>fixture-iframe-nested</title>
+  <style>
+    #frame-stage {
+      position: relative;
+      width: 720px;
+      height: 520px;
+    }
+    #outer-frame {
+      width: 720px;
+      height: 520px;
+      border: 0;
+      display: block;
+      position: absolute;
+      inset: 0;
+    }
+    #iframe-cover {
+      position: absolute;
+      inset: 0;
+      display: none;
+      background: rgba(0, 0, 0, 0.18);
+      z-index: 5;
+      pointer-events: auto;
+    }
+  </style>
+</head>
+<body>
+  <div id="frame-stage">
+    <iframe id="outer-frame" src="{{BASE_URL}}/frame-nested-middle"></iframe>
+    <div id="iframe-cover" data-testid="iframe-cover"></div>
+  </div>
+</body>
+</html>

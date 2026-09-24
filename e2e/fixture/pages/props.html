@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Props Test</title>
+<style>
+  .highlighted { color: red; }
+  .box { width: 100px; height: 50px; border: 1px solid #000; }
+</style>
+</head>
+<body>
+<h1>Props Test</h1>
+
+<h2>GetAttribute / HasAttribute</h2>
+<div data-testid="attr-full" id="attr-id" class="attr-class" data-custom="myval" href="/link">with attrs</div>
+<div data-testid="attr-empty">no extra attrs</div>
+
+<h2>GetStyle / HasStyle</h2>
+<div data-testid="style-inline" style="color: rgb(255, 0, 0); font-size: 20px; display: block;">inline style</div>
+<div data-testid="style-computed" class="box" style="background: rgb(0, 128, 0);">computed</div>
+<div data-testid="style-none" class="box">no inline</div>
+
+<h2>SetStyle / RemoveStyle</h2>
+<div data-testid="set-style-target" style="color: blue;">original style</div>
+<div data-testid="set-styles-target" style="color: black; font-size: 12px;">batch style</div>
+<div data-testid="remove-style-target" style="color: red; background: yellow;">has styles</div>
+
+<h2>HasClass</h2>
+<div data-testid="has-class-div" class="base active highlighted">with classes</div>
+<div data-testid="no-class-div">no class</div>
+
+<h2>GetHTML</h2>
+<div data-testid="html-parent">
+  <span data-testid="html-child">nested <b>bold</b> text</span>
+</div>
+
+<h2>SetTextContent / SetText</h2>
+<div data-testid="set-text-target">original text</div>
+<div data-testid="set-text-alias">alias text</div>
+
+<h2>Exists (Dynamic)</h2>
+<div id="exists-container">
+  <div data-testid="temp-exists">will be removed in 300ms</div>
+</div>
+<div data-testid="always-there">permanent</div>
+<div data-testid="delayed-appear" style="display:none">will appear in 600ms</div>
+<script>
+setTimeout(function() {
+  var el = document.querySelector('[data-testid=temp-exists]');
+  if (el) el.remove();
+}, 300);
+setTimeout(function() {
+  var el = document.querySelector('[data-testid=delayed-appear]');
+  if (el) el.style.display = 'block';
+}, 600);
+</script>
+
+<h2>BackendNodeIDs</h2>
+<div class="bnid-item" data-testid="bnid-1">A</div>
+<div class="bnid-item" data-testid="bnid-2">B</div>
+<div class="bnid-item" data-testid="bnid-3">C</div>
+
+<h2>GetByPlaceholder</h2>
+<input type="text" data-testid="placeholder-input" placeholder="Enter your name">
+<input type="text" data-testid="placeholder-exact" placeholder="Exact Match">
+
+<h2>At / Index</h2>
+<ul data-testid="index-list">
+  <li class="idx-item">Item 0</li>
+  <li class="idx-item">Item 1</li>
+  <li class="idx-item">Item 2</li>
+  <li class="idx-item">Item 3</li>
+</ul>
+
+<h2>WaitFor / WaitForAttached / WaitForDetached</h2>
+<div id="wait-container">
+  <div data-testid="will-disappear">will be removed in 300ms</div>
+</div>
+<div data-testid="will-appear" style="display:none">will appear in 500ms</div>
+<script>
+setTimeout(function() {
+  var el = document.querySelector('[data-testid=will-disappear]');
+  if (el) el.remove();
+}, 300);
+setTimeout(function() {
+  var el = document.querySelector('[data-testid=will-appear]');
+  if (el) el.style.display = 'block';
+}, 500);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>fixture-form-advanced</title></head>
+<body>
+  <label>
+    <input id="agree" data-testid="agree" type="checkbox" />
+    Agree
+  </label>
+  <label>
+    <input id="blocked-check" data-testid="blocked-check" type="checkbox" />
+    Blocked Check
+  </label>
+  <select id="city" data-testid="city">
+    <option value="">Choose</option>
+    <option value="shanghai">Shanghai</option>
+    <option value="hangzhou">Hangzhou</option>
+  </select>
+  <div id="state" data-testid="state"></div>
+  <script>
+    const agree = document.getElementById('agree');
+    const blocked = document.getElementById('blocked-check');
+    const city = document.getElementById('city');
+    const state = document.getElementById('state');
+    window.__formEvents = { agree: [], blocked: [], city: [] };
+    const valueOf = (target) => {
+      if (target.type === 'checkbox') return String(target.checked);
+      return target.value || '';
+    };
+    const wire = (name, target) => {
+      ['click', 'input', 'change'].forEach((type) => {
+        target.addEventListener(type, (event) => {
+          window.__formEvents[name].push({
+            type,
+            isTrusted: event.isTrusted,
+            value: valueOf(target)
+          });
+        });
+      });
+    };
+    wire('agree', agree);
+    wire('blocked', blocked);
+    wire('city', city);
+    blocked.addEventListener('click', (event) => {
+      event.preventDefault();
+    });
+    const render = () => {
+      state.textContent = JSON.stringify({
+        agree: agree.checked,
+        blocked: blocked.checked,
+        city: city.value
+      });
+    };
+    agree.addEventListener('change', render);
+    blocked.addEventListener('change', render);
+    city.addEventListener('change', render);
+    render();
+  </script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NextScroll E2E</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 20px;
+      background: #f5f5f5;
+      font-family: sans-serif;
+    }
+    h2 { margin: 30px 0 10px; }
+    .scroll-container {
+      width: 220px;
+      height: 200px;
+      overflow: auto;
+      border: 2px solid #333;
+      background: #fff;
+      margin-bottom: 10px;
+    }
+    .scroll-h {
+      width: 200px;
+      height: 220px;
+      overflow: auto;
+    }
+    .band-v {
+      width: 200px;
+      height: 200px;
+    }
+    .band-v.red    { background: rgb(220, 30, 30); }
+    .band-v.green  { background: rgb(30, 180, 40); }
+    .band-v.blue   { background: rgb(30, 80, 220); }
+    .band-h {
+      width: 200px;
+      height: 200px;
+      display: inline-block;
+    }
+    .band-h.red    { background: rgb(220, 30, 30); }
+    .band-h.green  { background: rgb(30, 180, 40); }
+    .band-h.blue   { background: rgb(30, 80, 220); }
+    .band-strip {
+      display: flex;
+      width: 600px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Vertical Scroll</h2>
+  <div class="scroll-container" data-testid="scroll-v">
+    <div class="band-v red"></div>
+    <div class="band-v green"></div>
+    <div class="band-v blue"></div>
+  </div>
+
+  <h2>Horizontal Scroll</h2>
+  <div class="scroll-container scroll-h" data-testid="scroll-h">
+    <div class="band-strip">
+      <div class="band-h red"></div>
+      <div class="band-h green"></div>
+      <div class="band-h blue"></div>
+    </div>
+  </div>
+</body>
+</html>

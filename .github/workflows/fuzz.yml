@@ -1,0 +1,45 @@
+name: Fuzz
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 3 * * 1'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fuzz-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fuzz:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [FuzzParseRef, FuzzRenderCursor]
+    env:
+      FUZZ_TARGET: ${{ matrix.target }}
+      FUZZ_TIME: ${{ github.event_name == 'schedule' && '5m' || '30s' }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+      - name: Fuzz snapshot inputs
+        run: go test ./snapshot -run='^$' -fuzz="^${FUZZ_TARGET}$" -fuzztime="$FUZZ_TIME" -fuzzminimizetime=30s -parallel=2 -timeout=10m
+      - name: Save failing corpus
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-${{ matrix.target }}-${{ github.run_attempt }}
+          path: snapshot/testdata/fuzz/
+          if-no-files-found: ignore
+          retention-days: 14

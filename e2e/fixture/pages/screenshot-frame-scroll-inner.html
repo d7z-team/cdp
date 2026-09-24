@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Screenshot Frame Inner Scroll</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      width: 720px;
+      min-width: 720px;
+      height: 620px;
+      min-height: 620px;
+      background: rgb(250 250 250);
+    }
+
+    .frame-board {
+      position: relative;
+      width: 720px;
+      height: 620px;
+    }
+
+    .frame-page-marker {
+      position: absolute;
+      width: 80px;
+      height: 70px;
+    }
+
+    .frame-page-marker.top-left {
+      left: 1px;
+      top: 1px;
+      background: rgb(220 20 30);
+    }
+
+    .frame-page-marker.bottom-right {
+      left: 639px;
+      top: 549px;
+      background: rgb(30 175 70);
+    }
+
+    .frame-scroll-box {
+      position: absolute;
+      left: 300px;
+      top: 260px;
+      width: 145px;
+      height: 115px;
+      overflow: auto;
+      background: rgb(255 255 255);
+      border: 0;
+    }
+
+    .frame-scroll-space {
+      position: relative;
+      width: 450px;
+      height: 360px;
+    }
+
+    .frame-target {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 300px;
+      height: 220px;
+      box-sizing: border-box;
+      border: 1px solid rgb(255 0 200);
+      background: rgb(255 255 255);
+    }
+
+    .target-paint {
+      position: absolute;
+      left: 1px;
+      top: 1px;
+      right: 1px;
+      bottom: 1px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+    }
+
+    .q-red {
+      background: rgb(230 35 35);
+    }
+
+    .q-blue {
+      background: rgb(35 95 235);
+    }
+
+    .q-yellow {
+      background: rgb(245 215 30);
+    }
+
+    .q-green {
+      background: rgb(30 180 80);
+    }
+
+    .edge-probe {
+      position: absolute;
+      pointer-events: none;
+    }
+
+    .edge-right-outer {
+      right: 1px;
+      top: 8px;
+      bottom: 8px;
+      width: 3px;
+      background: rgb(15 210 210);
+    }
+
+    .edge-right-middle {
+      right: 4px;
+      top: 8px;
+      bottom: 8px;
+      width: 3px;
+      background: rgb(250 120 20);
+    }
+
+    .edge-right-inner {
+      right: 7px;
+      top: 8px;
+      bottom: 8px;
+      width: 3px;
+      background: rgb(140 45 225);
+    }
+
+    .edge-bottom-outer {
+      left: 8px;
+      right: 8px;
+      bottom: 1px;
+      height: 3px;
+      background: rgb(145 235 35);
+    }
+
+    .edge-bottom-middle {
+      left: 8px;
+      right: 8px;
+      bottom: 4px;
+      height: 3px;
+      background: rgb(250 80 165);
+    }
+
+    .edge-bottom-inner {
+      left: 8px;
+      right: 8px;
+      bottom: 7px;
+      height: 3px;
+      background: rgb(30 80 165);
+    }
+
+    .edge-corner-outer {
+      right: 1px;
+      bottom: 1px;
+      width: 3px;
+      height: 3px;
+      background: rgb(0 115 125);
+    }
+
+    .edge-corner-middle {
+      right: 4px;
+      bottom: 4px;
+      width: 3px;
+      height: 3px;
+      background: rgb(190 45 45);
+    }
+
+    .edge-corner-inner {
+      right: 7px;
+      bottom: 7px;
+      width: 3px;
+      height: 3px;
+      background: rgb(70 70 230);
+    }
+  </style>
+</head>
+<body>
+  <main class="frame-board">
+    <div class="frame-page-marker top-left"></div>
+    <div class="frame-page-marker bottom-right"></div>
+    <section class="frame-scroll-box" data-testid="frame-scroll-box" aria-label="frame scroll box">
+      <div class="frame-scroll-space">
+        <div class="frame-target" data-testid="frame-scroll-target">
+          <div class="target-paint">
+            <div class="q-red"></div>
+            <div class="q-blue"></div>
+            <div class="q-yellow"></div>
+            <div class="q-green"></div>
+          </div>
+          <div class="edge-probe edge-right-outer"></div>
+          <div class="edge-probe edge-right-middle"></div>
+          <div class="edge-probe edge-right-inner"></div>
+          <div class="edge-probe edge-bottom-outer"></div>
+          <div class="edge-probe edge-bottom-middle"></div>
+          <div class="edge-probe edge-bottom-inner"></div>
+          <div class="edge-probe edge-corner-outer"></div>
+          <div class="edge-probe edge-corner-middle"></div>
+          <div class="edge-probe edge-corner-inner"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

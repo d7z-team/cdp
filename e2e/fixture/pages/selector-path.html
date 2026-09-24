@@ -1,0 +1,15 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>fixture-selector-path</title></head>
+<body>
+  <section id="actual">
+    <button data-testid="chosen">chosen-path</button>
+  </section>
+  <button id="absolute-target" onclick="this.dataset.clicks = String(Number(this.dataset.clicks || 0) + 1)">absolute-target</button>
+  <div id="shadow-host"></div>
+  <script>
+    const root = document.getElementById('shadow-host').attachShadow({mode: 'open'});
+    root.innerHTML = '<button id="shadow-target">shadow-target</button>';
+  </script>
+</body>
+</html>

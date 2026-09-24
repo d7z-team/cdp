@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>MCP Infinite Long</title>
+  <style>
+    body { font: 15px/1.5 system-ui, sans-serif; margin: 0; padding: 20px; }
+    section { margin-bottom: 24px; }
+    .spacer { height: 75vh; }
+  </style>
+</head>
+<body>
+  <h1>Long Infinite MCP Feed</h1>
+  <p>Initial visible content.</p>
+  <main id="feed"></main>
+  <div class="spacer"></div>
+  <script>
+    const feed = document.getElementById('feed');
+    let batch = 0;
+    let loading = false;
+    function makeText(batchIndex, itemIndex) {
+      return `Batch ${batchIndex} item ${itemIndex} ` + 'lorem ipsum snapshot aggregation '.repeat(35);
+    }
+    function appendBatch() {
+      batch += 1;
+      for (let i = 0; i < 14; i++) {
+        const section = document.createElement('section');
+        section.innerHTML = `<h2>Batch ${batch} Section ${i + 1}</h2><p>${makeText(batch, i + 1)}</p>`;
+        feed.appendChild(section);
+      }
+    }
+    function maybeLoad() {
+      if (loading || batch >= 10) return;
+      if (window.innerHeight + window.scrollY + 60 < document.body.scrollHeight) return;
+      loading = true;
+      setTimeout(() => {
+        appendBatch();
+        loading = false;
+      }, 80);
+    }
+    window.addEventListener('scroll', maybeLoad, {passive: true});
+    appendBatch();
+    maybeLoad();
+  </script>
+</body>
+</html>

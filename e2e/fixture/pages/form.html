@@ -1,0 +1,16 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>fixture-form</title></head>
+<body>
+  <label for="name-input">Name</label>
+  <input id="name-input" data-testid="name-input" value="" />
+  <div id="mirror" data-testid="mirror"></div>
+  <script>
+    const input = document.getElementById('name-input');
+    const mirror = document.getElementById('mirror');
+    input.addEventListener('input', () => {
+      mirror.textContent = input.value;
+    });
+  </script>
+</body>
+</html>

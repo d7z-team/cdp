@@ -1,0 +1,19 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>fixture-selector-text</title></head>
+<body>
+  <div data-testid="news-state">idle</div>
+  <div data-testid="news-shell">
+    <a href="#news" data-testid="news-link" onclick="event.preventDefault(); document.querySelector('[data-testid=&quot;news-state&quot;]').textContent='news-clicked';">
+      <span class="icon">*</span><span class="rank">6</span><span class="title">Sample headline with multiple text fragments</span>
+    </a>
+  </div>
+
+  <div data-testid="match-state">idle</div>
+  <div data-testid="outer-match" onclick="document.querySelector('[data-testid=&quot;match-state&quot;]').textContent='outer-clicked';">
+    <a href="#inner" data-testid="inner-match" onclick="event.preventDefault(); event.stopPropagation(); document.querySelector('[data-testid=&quot;match-state&quot;]').textContent='inner-clicked';">
+      Alpha <span>Beta</span>
+    </a>
+  </div>
+</body>
+</html>

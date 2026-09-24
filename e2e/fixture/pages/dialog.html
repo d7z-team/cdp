@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>fixture-dialog</title></head>
+<body>
+  <main>
+    <button data-testid="confirm-open" onclick="openConfirm()">open confirm</button>
+    <div data-testid="confirm-result">idle</div>
+
+    <button data-testid="prompt-open" onclick="openPrompt()">open prompt</button>
+    <div data-testid="prompt-result">idle</div>
+    <div data-testid="prompt-count">0</div>
+  </main>
+
+  <script>
+    let promptCount = 0;
+
+    function openConfirm() {
+      const accepted = window.confirm("confirm dialog");
+      document.querySelector('[data-testid="confirm-result"]').textContent = accepted ? "accepted" : "dismissed";
+    }
+
+    function openPrompt() {
+      promptCount += 1;
+      const result = window.prompt("prompt dialog", "seed");
+      document.querySelector('[data-testid="prompt-count"]').textContent = String(promptCount);
+      document.querySelector('[data-testid="prompt-result"]').textContent = result === null ? "dismissed" : result;
+    }
+  </script>
+</body>
+</html>

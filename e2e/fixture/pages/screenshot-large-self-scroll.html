@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>Screenshot Large Self Scroll</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      min-width: 900px;
+      min-height: 1850px;
+      background: rgb(244 247 250);
+    }
+
+    .large-scroll {
+      position: absolute;
+      left: 120px;
+      top: 120px;
+      width: 360px;
+      height: 1400px;
+      overflow: auto;
+      border: 0;
+      background: rgb(255 255 255);
+    }
+
+    .large-content {
+      position: relative;
+      width: 360px;
+      height: 5000px;
+      background: rgb(235 238 242);
+    }
+
+    .marker {
+      position: absolute;
+      left: 0;
+      width: 360px;
+      height: 120px;
+    }
+
+    .marker-top {
+      top: 0;
+      background: rgb(230 35 35);
+    }
+
+    .marker-mid-a {
+      top: 1040px;
+      background: rgb(35 95 235);
+    }
+
+    .marker-mid-b {
+      top: 2380px;
+      background: rgb(245 215 30);
+    }
+
+    .marker-before-tail {
+      top: 3620px;
+      background: rgb(30 180 80);
+    }
+
+    .marker-tail {
+      top: 4880px;
+      background: rgb(15 210 210);
+    }
+  </style>
+</head>
+<body>
+  <section class="large-scroll" data-testid="large-self-scroll-list" aria-label="large self scroll screenshot list">
+    <div class="large-content">
+      <div class="marker marker-top"></div>
+      <div class="marker marker-mid-a"></div>
+      <div class="marker marker-mid-b"></div>
+      <div class="marker marker-before-tail"></div>
+      <div class="marker marker-tail"></div>
+    </div>
+  </section>
+</body>
+</html>

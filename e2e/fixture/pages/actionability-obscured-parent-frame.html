@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>fixture-actionability-obscured-parent-frame</title>
+  <style>
+    body { margin: 0; min-height: 180vh; font-family: sans-serif; }
+    .spacer { height: 58vh; }
+    iframe { display: block; width: min(640px, calc(100vw - 48px)); height: 280px; margin: 0 auto; border: 1px solid #b8c0cc; }
+    .page-footer {
+      position: fixed;
+      z-index: 4;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      height: 32vh;
+      padding: 24px;
+      background: white;
+      border-top: 1px solid #b8c0cc;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <div class="spacer"></div>
+  <iframe id="parent-obscured-frame" src="{{BASE_URL}}/actionability-obscured-frame?mode=parent"></iframe>
+  <div class="page-footer" data-testid="parent-page-footer">关闭 保存</div>
+</body>
+</html>

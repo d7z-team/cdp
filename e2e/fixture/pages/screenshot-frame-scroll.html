@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Screenshot Frame Parent Scroll</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      width: 1600px;
+      min-width: 1600px;
+      height: 1300px;
+      min-height: 1300px;
+      background: rgb(238 238 238);
+    }
+
+    .stage {
+      position: relative;
+      width: 1600px;
+      height: 1300px;
+    }
+
+    #screenshot-frame {
+      position: absolute;
+      left: 980px;
+      top: 850px;
+      width: 260px;
+      height: 190px;
+      border: 0;
+      display: block;
+      background: rgb(255 255 255);
+    }
+  </style>
+</head>
+<body>
+  <main class="stage">
+    <iframe id="screenshot-frame" data-testid="screenshot-frame" src="{{BASE_URL}}/screenshot-frame-scroll-inner"></iframe>
+  </main>
+</body>
+</html>

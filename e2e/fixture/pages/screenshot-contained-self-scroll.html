@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>Screenshot Contained Self Scroll</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: rgb(244 247 250);
+    }
+
+    .contained-scroll {
+      position: absolute;
+      left: 80px;
+      top: 90px;
+      width: 360px;
+      height: 420px;
+      overflow: auto;
+      border: 0;
+      background: rgb(255 255 255);
+    }
+
+    .contained-content {
+      position: relative;
+      width: 360px;
+      height: 2200px;
+      background: rgb(235 238 242);
+    }
+
+    .marker {
+      position: absolute;
+      left: 0;
+      width: 360px;
+      height: 110px;
+    }
+
+    .marker-top {
+      top: 0;
+      background: rgb(230 35 35);
+    }
+
+    .marker-mid {
+      top: 850px;
+      background: rgb(35 95 235);
+    }
+
+    .marker-low {
+      top: 1680px;
+      background: rgb(245 215 30);
+    }
+
+    .marker-tail {
+      top: 2090px;
+      background: rgb(15 210 210);
+    }
+  </style>
+</head>
+<body>
+  <section class="contained-scroll" data-testid="contained-self-scroll-list" aria-label="contained self scroll screenshot list">
+    <div class="contained-content">
+      <div class="marker marker-top"></div>
+      <div class="marker marker-mid"></div>
+      <div class="marker marker-low"></div>
+      <div class="marker marker-tail"></div>
+    </div>
+  </section>
+</body>
+</html>

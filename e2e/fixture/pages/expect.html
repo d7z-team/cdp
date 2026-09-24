@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Expectation Test</title></head>
+<body>
+<h1>Expectation Tests</h1>
+
+<h2>Visibility</h2>
+<div data-testid="visible-box" style="width:100px;height:50px;background:green">always visible</div>
+<div data-testid="hidden-box" style="display:none">permanently hidden</div>
+<div data-testid="delayed-hidden" style="width:100px;height:50px;background:red">will hide in 300ms</div>
+<script>
+setTimeout(function() {
+  document.querySelector('[data-testid=delayed-hidden]').style.display = 'none';
+}, 300);
+</script>
+
+<h2>Text</h2>
+<div data-testid="text-static">Hello World</div>
+<div data-testid="text-dynamic" data-text="">loading...</div>
+<script>
+setTimeout(function() {
+  var el = document.querySelector('[data-testid=text-dynamic]');
+  el.textContent = 'Loaded Successfully';
+  el.setAttribute('data-text', 'Loaded Successfully');
+}, 500);
+</script>
+<div data-testid="text-contains">The quick brown fox jumps over the lazy dog</div>
+
+<h2>Enable / Disable</h2>
+<button data-testid="btn-enabled">enabled</button>
+<button data-testid="btn-disabled" disabled>disabled</button>
+<button data-testid="btn-delayed-enable" disabled>will enable in 500ms</button>
+<button data-testid="btn-delayed-disable">will disable in 300ms</button>
+<script>
+setTimeout(function() {
+  document.querySelector('[data-testid=btn-delayed-enable]').disabled = false;
+}, 500);
+setTimeout(function() {
+  document.querySelector('[data-testid=btn-delayed-disable]').disabled = true;
+}, 300);
+</script>
+
+<h2>Checked</h2>
+<input type="checkbox" data-testid="cb-checked" checked>
+<input type="checkbox" data-testid="cb-unchecked">
+<input type="checkbox" data-testid="cb-delayed-check">
+<script>
+setTimeout(function() {
+  document.querySelector('[data-testid=cb-delayed-check]').checked = true;
+}, 400);
+</script>
+
+<h2>Editable</h2>
+<input type="text" data-testid="input-editable" value="edit me">
+<textarea data-testid="textarea-editable">edit this</textarea>
+<div data-testid="div-not-editable" contenteditable="false">not editable</div>
+
+<h2>Empty</h2>
+<div data-testid="empty-div"></div>
+<div data-testid="non-empty-div">has content</div>
+<div data-testid="delayed-empty" data-empty="">content</div>
+<script>
+setTimeout(function() {
+  var el = document.querySelector('[data-testid=delayed-empty]');
+  el.textContent = '';
+  el.setAttribute('data-empty', 'true');
+}, 400);
+</script>
+
+<h2>Count</h2>
+<ul data-testid="list">
+  <li class="item">Item A</li>
+  <li class="item">Item B</li>
+  <li class="item">Item C</li>
+</ul>
+<ul data-testid="list-dynamic">
+  <li class="dyn-item">One</li>
+</ul>
+<script>
+setTimeout(function() {
+  var list = document.querySelector('[data-testid=list-dynamic]');
+  for (var i = 1; i <= 3; i++) {
+    var li = document.createElement('li');
+    li.className = 'dyn-item';
+    li.textContent = 'Dyn ' + i;
+    list.appendChild(li);
+  }
+}, 500);
+</script>
+
+<h2>Value</h2>
+<input data-testid="value-input" type="text" value="initial">
+<input data-testid="value-delayed" type="text" value="">
+<script>
+setTimeout(function() {
+  document.querySelector('[data-testid=value-delayed]').value = 'changed';
+}, 400);
+</script>
+
+<h2>Attribute</h2>
+<div data-testid="attr-div" data-myattr="hello" title="a title"></div>
+<div data-testid="attr-dynamic" data-status="pending"></div>
+<script>
+setTimeout(function() {
+  document.querySelector('[data-testid=attr-dynamic]').setAttribute('data-status', 'done');
+}, 400);
+</script>
+
+<h2>Class</h2>
+<div data-testid="class-div" class="base active highlighted"></div>
+<div data-testid="class-dynamic" class="base"></div>
+<script>
+setTimeout(function() {
+  document.querySelector('[data-testid=class-dynamic]').classList.add('dynamic-added');
+}, 400);
+</script>
+
+<h2>CSS</h2>
+<div data-testid="css-div" style="color: rgb(255, 0, 0); font-size: 20px; display: block;">styled</div>
+<div data-testid="css-dynamic" style="color: blue;">dynamic style</div>
+<script>
+setTimeout(function() {
+  document.querySelector('[data-testid=css-dynamic]').style.color = 'rgb(0, 128, 0)';
+}, 400);
+</script>
+
+<h2>Exists</h2>
+<div data-testid="always-exists" id="always-exists">YES</div>
+<div id="exists-container"><div id="temporary-element">temp</div></div>
+<script>
+setTimeout(function() {
+  var el = document.getElementById('temporary-element');
+  if (el) el.remove();
+}, 300);
+</script>
+
+<h2>Nil safety - check panic</h2>
+<!-- no specific elements needed, tested in code -->
+
+<h2>Timeout</h2>
+<div data-testid="never-visible" style="display:none">will never be visible</div>
+<div data-testid="always-visible" style="display:block">always here</div>
+
+</body>
+</html>

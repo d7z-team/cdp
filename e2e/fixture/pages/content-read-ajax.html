@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="description" content="AJAX loaded content test page">
+  <meta name="author" content="Test Author">
+  <title>AJAX Content Test Page</title>
+  <style>
+    body { font-family: sans-serif; margin: 0; padding: 0; }
+    main { max-width: 720px; margin: 0 auto; padding: 24px; }
+    .loading { color: #999; font-style: italic; }
+    .loaded { color: #333; }
+    .error { color: red; }
+    .static-section { background: #f9f9f9; padding: 16px; margin: 16px 0; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>AJAX Content Test Page</h1>
+    <p class="static-section">This is static content that should always be captured.</p>
+
+    <div id="ajax-target">
+      <p class="loading">Loading data from API...</p>
+    </div>
+
+    <div id="delayed-ajax-target">
+      <p class="loading">Waiting for delayed data...</p>
+    </div>
+
+    <h2>More Static Content</h2>
+    <p class="static-section">This additional static content should also be captured regardless of AJAX state.</p>
+  </main>
+
+  <script>
+    // Immediate AJAX: fires during page load
+    fetch('/api/hello')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var target = document.getElementById('ajax-target');
+        target.innerHTML = '<p class="loaded">Immediate AJAX result: ' + data.message + '</p>';
+      })
+      .catch(function(err) {
+        var target = document.getElementById('ajax-target');
+        target.innerHTML = '<p class="error">AJAX failed: ' + err.message + '</p>';
+      });
+
+    // Delayed AJAX: fires 500ms after page load completes
+    window.setTimeout(function() {
+      fetch('/api/data')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          var target = document.getElementById('delayed-ajax-target');
+          target.innerHTML = '<p class="loaded">Delayed AJAX result: updated=' + data.updated + '</p>';
+        })
+        .catch(function(err) {
+          var target = document.getElementById('delayed-ajax-target');
+          target.innerHTML = '<p class="error">Delayed AJAX failed: ' + err.message + '</p>';
+        });
+    }, 2000);
+  </script>
+</body>
+</html>

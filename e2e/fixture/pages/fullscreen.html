@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>fixture-fullscreen</title>
+</head>
+<body>
+  <main>
+    <div data-testid="fullscreen-panel" id="fullscreen-panel" style="padding: 16px; border: 1px solid #999;">
+      virtual fullscreen panel
+    </div>
+    <p data-testid="fullscreen-active">false</p>
+    <p data-testid="fullscreen-element"></p>
+    <p data-testid="fullscreen-count">0</p>
+    <p data-testid="fullscreen-result">idle</p>
+    <button type="button" data-testid="fullscreen-enter" onclick="enterFullscreen()">enter fullscreen</button>
+    <button type="button" data-testid="fullscreen-exit" onclick="exitFullscreen()">exit fullscreen</button>
+  </main>
+
+  <script>
+    let changeCount = 0;
+
+    function currentElementLabel() {
+      const element = document.fullscreenElement;
+      return element ? (element.getAttribute('data-testid') || element.id || element.tagName.toLowerCase()) : '';
+    }
+
+    function syncState() {
+      document.querySelector('[data-testid="fullscreen-active"]').textContent = String(!!document.fullscreenElement);
+      document.querySelector('[data-testid="fullscreen-element"]').textContent = currentElementLabel();
+      document.querySelector('[data-testid="fullscreen-count"]').textContent = String(changeCount);
+    }
+
+    async function enterFullscreen() {
+      const panel = document.querySelector('[data-testid="fullscreen-panel"]');
+      await panel.requestFullscreen();
+      document.querySelector('[data-testid="fullscreen-result"]').textContent = 'enter-resolved';
+      syncState();
+    }
+
+    async function exitFullscreen() {
+      await document.exitFullscreen();
+      document.querySelector('[data-testid="fullscreen-result"]').textContent = 'exit-resolved';
+      syncState();
+    }
+
+    document.addEventListener('fullscreenchange', () => {
+      changeCount += 1;
+      syncState();
+    });
+
+    syncState();
+  </script>
+</body>
+</html>

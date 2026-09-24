@@ -1,0 +1,12 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'nonce-fixture'; object-src 'none'">
+<title>Strict CSP</title>
+<button id="allowed">Allowed listener</button><output id="value">0</output>
+<script>window.disallowedScriptRan = true;</script>
+<script nonce="fixture">
+let count = 0;
+document.querySelector('#allowed').addEventListener('click', () => {
+  document.querySelector('#value').textContent = String(++count);
+});
+</script>

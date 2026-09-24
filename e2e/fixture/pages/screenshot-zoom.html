@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Zoomed Element Screenshot</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      min-width: 1200px;
+      min-height: 900px;
+      background: rgb(210 24 24);
+      font-family: sans-serif;
+    }
+
+    .stage {
+      position: relative;
+      width: 760px;
+      height: 1000px;
+      margin: 0;
+      background: rgb(210 24 24);
+    }
+
+    .marker {
+      position: absolute;
+      width: 160px;
+      height: 120px;
+    }
+
+    .marker.blue {
+      left: 90px;
+      top: 95px;
+      background: rgb(24 72 220);
+    }
+
+    .marker.yellow {
+      left: 470px;
+      top: 720px;
+      background: rgb(235 210 20);
+    }
+
+    [data-testid="zoom-shot-target"] {
+      position: absolute;
+      left: 300px;
+      top: 560px;
+      width: 120px;
+      height: 84px;
+      box-sizing: border-box;
+      border: 1px solid rgb(255 0 200);
+      background: rgb(20 190 70);
+      color: transparent;
+    }
+  </style>
+</head>
+<body>
+  <main class="stage">
+    <div class="marker blue" aria-hidden="true"></div>
+    <div class="marker yellow" aria-hidden="true"></div>
+    <div data-testid="zoom-shot-target">target</div>
+  </main>
+</body>
+</html>

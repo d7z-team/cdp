@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>Large DOM Fixture</title></head>
+<body>
+  <h2>Large Page</h2>
+  <div id="container"></div>
+  <button id="target-btn">Target</button>
+  <script>
+    // Generate ~2000 DOM nodes with nested structure
+    const container = document.getElementById('container');
+    for (let i = 0; i < 200; i++) {
+      const section = document.createElement('div');
+      section.className = 'section';
+      const h3 = document.createElement('h3');
+      h3.textContent = 'Section ' + i;
+      section.appendChild(h3);
+      for (let j = 0; j < 5; j++) {
+        const p = document.createElement('p');
+        p.textContent = 'Paragraph ' + i + '-' + j;
+        section.appendChild(p);
+        const btn = document.createElement('button');
+        btn.textContent = 'Btn ' + i + '-' + j;
+        btn.addEventListener('click', function() { this.textContent = 'clicked'; });
+        section.appendChild(btn);
+      }
+      container.appendChild(section);
+    }
+  </script>
+</body>
+</html>

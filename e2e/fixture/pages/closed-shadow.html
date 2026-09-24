@@ -1,0 +1,36 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Author shadow roots</title>
+<div id="closed"></div><div id="open"></div><button id="add">Add root</button>
+<button id="add-frame">Add frame</button>
+<output id="count">0</output>
+<script>
+let count = 0;
+function populate(host, mode, label) {
+  const root = host.attachShadow({mode});
+  const button = document.createElement('button');
+  button.className = 'shadow-action'; button.textContent = label;
+  button.onclick = () => document.querySelector('#count').textContent = String(++count);
+  root.append(button);
+  const input = document.createElement('input'); input.id = 'shadow-input'; input.placeholder = label;
+  root.append(input);
+  return root;
+}
+const closed = populate(document.querySelector('#closed'), 'closed', 'Closed action');
+const slotted = document.createElement('span'); slotted.slot = 'label'; slotted.textContent = 'Slotted label';
+document.querySelector('#closed').append(slotted);
+const slot = document.createElement('slot'); slot.name = 'label'; closed.append(slot);
+populate(document.querySelector('#open'), 'open', 'Open action');
+const nested = document.createElement('section'); closed.append(nested);
+populate(nested, 'closed', 'Nested action');
+document.querySelector('#add').onclick = () => {
+  const host = document.createElement('article'); document.body.append(host);
+  populate(host, 'closed', 'Dynamic action');
+};
+document.querySelector('#add-frame').onclick = () => {
+  const frame = document.createElement('iframe'); frame.id = 'shadow-frame';
+  const url = new URL('/frame-content', location.href);
+  if (location.search.includes('cross')) url.hostname = location.hostname === 'localhost' ? '127.0.0.1' : 'localhost';
+  frame.src = url.href; closed.append(frame);
+};
+</script>

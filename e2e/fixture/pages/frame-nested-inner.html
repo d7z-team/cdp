@@ -1,0 +1,333 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>fixture-frame-nested-inner</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 12px;
+    }
+    .panel {
+      margin-top: 12px;
+      padding: 8px;
+      border: 1px solid #d0d7de;
+    }
+    #shot-target {
+      width: 120px;
+      height: 48px;
+      box-sizing: border-box;
+      border: 1px solid rgb(255 0 200);
+      background: linear-gradient(90deg, #1d4ed8, #60a5fa);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 8px;
+    }
+    #covered-wrap {
+      position: relative;
+      width: 150px;
+      height: 44px;
+      margin-top: 8px;
+    }
+    #covered-btn {
+      width: 150px;
+      height: 44px;
+    }
+    #cover-mask {
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.75);
+    }
+  </style>
+</head>
+<body>
+  <button
+    id="deep-btn"
+    data-testid="deep-btn"
+    onclick="this.textContent='deep-clicked'; document.querySelector('#click-state').textContent='primary-clicked';"
+  >deep-button</button>
+  <button
+    id="action-btn"
+    data-testid="action-btn"
+    onclick="document.querySelector('#action-log').textContent='action-clicked';"
+  >action-button</button>
+
+  <div class="panel">
+    <div id="click-state" data-testid="click-state">idle</div>
+    <div id="action-log" data-testid="action-log">pending</div>
+  </div>
+
+  <div class="panel">
+    <label for="deep-input">deep-input</label>
+    <input id="deep-input" data-testid="deep-input" oninput="document.querySelector('#input-mirror').textContent=this.value">
+    <div id="input-mirror" data-testid="input-mirror"></div>
+  </div>
+
+  <div class="panel">
+    <label for="repeat-input">repeat-input</label>
+    <input id="repeat-input" data-testid="repeat-input">
+    <button type="button" id="repeat-submit" data-testid="repeat-submit" onclick="submitRepeatInput(event)">repeat-submit</button>
+    <div id="repeat-count" data-testid="repeat-count">0</div>
+    <div id="repeat-last" data-testid="repeat-last"></div>
+    <div id="repeat-log" data-testid="repeat-log"></div>
+    <div id="repeat-click-delta" data-testid="repeat-click-delta"></div>
+    <div id="repeat-click-point" data-testid="repeat-click-point"></div>
+  </div>
+
+  <div class="panel">
+    <div id="hover-target" data-testid="hover-target" onmouseenter="document.querySelector('#hover-state').textContent='hovered'">hover-area</div>
+    <div id="hover-state" data-testid="hover-state">idle</div>
+  </div>
+
+  <div class="panel">
+    <input
+      id="press-input"
+      data-testid="press-input"
+      onkeydown="if (event.key === 'Enter') { document.querySelector('#press-state').textContent = this.value + ':enter'; }"
+    >
+    <div id="press-state" data-testid="press-state">idle</div>
+  </div>
+
+  <div class="panel">
+    <button type="button" data-testid="disable-trigger" onclick="triggerDisableSequence()">trigger-disable</button>
+    <button type="button" data-testid="toggle-target">toggle-target</button>
+    <button type="button" data-testid="remove-trigger" onclick="triggerRemoveSequence()">trigger-remove</button>
+    <div data-testid="remove-target">remove-me</div>
+  </div>
+
+  <div class="panel">
+    <button type="button" data-testid="native-disabled-release" onclick="releaseNativeDisabledTarget()">release-native-disabled</button>
+    <button type="button" data-testid="native-disabled-target" disabled onclick="document.querySelector('[data-testid=&quot;native-disabled-state&quot;]').textContent='clicked'">native-disabled-target</button>
+    <div data-testid="native-disabled-state">idle</div>
+  </div>
+
+  <div class="panel">
+    <label for="upload-input">upload-input</label>
+    <input
+      id="upload-input"
+      data-testid="upload-input"
+      type="file"
+      onchange="document.querySelector('#upload-state').textContent = this.files && this.files[0] ? this.files[0].name : ''"
+    >
+    <div id="upload-state" data-testid="upload-state"></div>
+  </div>
+
+  <div class="panel" data-testid="upload-wrapper">
+    <button type="button">wrapped-upload-button</button>
+    <input
+      id="upload-wrapper-input"
+      type="file"
+      hidden
+      onchange="document.querySelector('#upload-wrapper-state').textContent = this.files && this.files[0] ? this.files[0].name : ''"
+    >
+    <div id="upload-wrapper-state" data-testid="upload-wrapper-state"></div>
+  </div>
+
+  <div class="panel">
+    <label for="upload-label-input" data-testid="upload-label">label-upload</label>
+    <input
+      id="upload-label-input"
+      type="file"
+      hidden
+      onchange="document.querySelector('#upload-label-state').textContent = this.files && this.files[0] ? this.files[0].name : ''"
+    >
+    <div id="upload-label-state" data-testid="upload-label-state"></div>
+  </div>
+
+  <div class="panel">
+    <label data-testid="upload-nested-label">
+      <span data-testid="upload-label-child">nested-label-upload</span>
+      <input
+        id="upload-nested-label-input"
+        type="file"
+        hidden
+        onchange="document.querySelector('#upload-nested-label-state').textContent = this.files && this.files[0] ? this.files[0].name : ''"
+      >
+    </label>
+    <div id="upload-nested-label-state" data-testid="upload-nested-label-state"></div>
+  </div>
+
+  <div class="panel">
+    <input
+      id="upload-prev-sibling-input"
+      type="file"
+      hidden
+      onchange="document.querySelector('#upload-prev-sibling-state').textContent = this.files && this.files[0] ? this.files[0].name : ''"
+    >
+    <button type="button" data-testid="upload-prev-sibling">prev-sibling-upload</button>
+    <div id="upload-prev-sibling-state" data-testid="upload-prev-sibling-state"></div>
+  </div>
+
+  <div class="panel">
+    <button type="button" data-testid="upload-next-sibling">next-sibling-upload</button>
+    <input
+      id="upload-next-sibling-input"
+      type="file"
+      hidden
+      onchange="document.querySelector('#upload-next-sibling-state').textContent = this.files && this.files[0] ? this.files[0].name : ''"
+    >
+    <div id="upload-next-sibling-state" data-testid="upload-next-sibling-state"></div>
+  </div>
+
+  <div class="panel" data-testid="upload-ambiguous">
+    <input type="file" hidden>
+    <input type="file" hidden>
+  </div>
+
+  <div class="panel">
+    <button type="button" data-testid="upload-missing">missing-upload-input</button>
+  </div>
+
+  <div class="panel">
+    <div id="covered-wrap">
+      <button type="button" id="covered-btn" data-testid="covered-btn">covered-button</button>
+      <div id="cover-mask" data-testid="cover-mask"></div>
+    </div>
+  </div>
+
+  <form class="panel" id="deep-form">
+    <label>
+      <input type="checkbox" data-testid="deep-check" onchange="syncFormState()">
+      agree
+    </label>
+    <label for="deep-city">city</label>
+    <select id="deep-city" data-testid="deep-city" onchange="syncFormState()">
+      <option value="">pick</option>
+      <option value="shanghai">shanghai</option>
+      <option value="hangzhou">hangzhou</option>
+    </select>
+    <div id="form-state" data-testid="form-state">{"agree":false,"city":""}</div>
+  </form>
+
+  <div class="panel" id="deep-cards">
+    <div class="deep-card">
+      <span class="title">alpha</span>
+      <span class="price">11</span>
+    </div>
+    <div class="deep-card">
+      <span class="title">beta</span>
+      <span class="price">22</span>
+    </div>
+  </div>
+
+  <table class="panel" id="deep-report" data-testid="deep-report">
+    <thead>
+      <tr><th>Name</th><th>Qty</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>iris</td><td>5</td></tr>
+      <tr><td>jade</td><td>8</td></tr>
+    </tbody>
+  </table>
+
+  <div class="panel">
+    <div id="shot-target" data-testid="shot-target">deep-shot</div>
+  </div>
+
+  <div class="panel">
+    <button type="button" data-testid="aria-disabled-release" onclick="releaseAriaDisabledTarget()">release-aria-disabled</button>
+    <div
+      role="button"
+      tabindex="0"
+      data-testid="aria-disabled-target"
+      aria-disabled="true"
+      onclick="document.querySelector('[data-testid=&quot;aria-disabled-state&quot;]').textContent='clicked'"
+    >aria-disabled-target</div>
+    <div data-testid="aria-disabled-state">idle</div>
+  </div>
+
+  <div class="panel">
+    <button type="button" data-testid="ancestor-aria-disabled-release" onclick="releaseAncestorAriaDisabledTarget()">release-ancestor-aria-disabled</button>
+    <div data-testid="ancestor-aria-disabled-container" role="group" aria-disabled="true">
+      <div
+        role="button"
+        tabindex="0"
+        data-testid="ancestor-aria-disabled-target"
+        onclick="document.querySelector('[data-testid=&quot;ancestor-aria-disabled-state&quot;]').textContent='clicked'"
+      >ancestor-aria-disabled-target</div>
+    </div>
+    <div data-testid="ancestor-aria-disabled-state">idle</div>
+  </div>
+
+  <script>
+    function syncFormState() {
+      const agree = document.querySelector('[data-testid="deep-check"]').checked;
+      const city = document.querySelector('[data-testid="deep-city"]').value;
+      document.querySelector('#form-state').textContent = JSON.stringify({ agree, city });
+    }
+
+    function submitRepeatInput(event) {
+      const input = document.querySelector('[data-testid="repeat-input"]');
+      const submit = document.querySelector('[data-testid="repeat-submit"]');
+      const countNode = document.querySelector('[data-testid="repeat-count"]');
+      const lastNode = document.querySelector('[data-testid="repeat-last"]');
+      const logNode = document.querySelector('[data-testid="repeat-log"]');
+      const deltaNode = document.querySelector('[data-testid="repeat-click-delta"]');
+      const pointNode = document.querySelector('[data-testid="repeat-click-point"]');
+      const nextCount = Number(countNode.textContent || '0') + 1;
+      countNode.textContent = String(nextCount);
+      lastNode.textContent = input.value;
+      logNode.textContent = `submit:${nextCount}:${input.value}`;
+      if (event && submit) {
+        const rect = submit.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        const deltaX = event.clientX - centerX;
+        const deltaY = event.clientY - centerY;
+        deltaNode.textContent = `${deltaX.toFixed(2)},${deltaY.toFixed(2)}`;
+        pointNode.textContent = `${event.clientX.toFixed(2)},${event.clientY.toFixed(2)}|${centerX.toFixed(2)},${centerY.toFixed(2)}`;
+      }
+    }
+
+    function triggerDisableSequence() {
+      const target = document.querySelector('[data-testid="toggle-target"]');
+      target.disabled = true;
+      setTimeout(() => {
+        target.disabled = false;
+        setTimeout(() => {
+          target.style.display = 'none';
+        }, 220);
+      }, 220);
+    }
+
+    function triggerRemoveSequence() {
+      const target = document.querySelector('[data-testid="remove-target"]');
+      setTimeout(() => {
+        target.remove();
+      }, 120);
+    }
+
+    function releaseNativeDisabledTarget() {
+      const state = document.querySelector('[data-testid="native-disabled-state"]');
+      const target = document.querySelector('[data-testid="native-disabled-target"]');
+      state.textContent = 'waiting';
+      setTimeout(() => {
+        target.disabled = false;
+        state.textContent = 'ready';
+      }, 220);
+    }
+
+    function releaseAriaDisabledTarget() {
+      const state = document.querySelector('[data-testid="aria-disabled-state"]');
+      const target = document.querySelector('[data-testid="aria-disabled-target"]');
+      state.textContent = 'waiting';
+      setTimeout(() => {
+        target.setAttribute('aria-disabled', 'false');
+        state.textContent = 'ready';
+      }, 220);
+    }
+
+    function releaseAncestorAriaDisabledTarget() {
+      const state = document.querySelector('[data-testid="ancestor-aria-disabled-state"]');
+      const target = document.querySelector('[data-testid="ancestor-aria-disabled-container"]');
+      state.textContent = 'waiting';
+      setTimeout(() => {
+        target.setAttribute('aria-disabled', 'false');
+        state.textContent = 'ready';
+      }, 220);
+    }
+  </script>
+</body>
+</html>

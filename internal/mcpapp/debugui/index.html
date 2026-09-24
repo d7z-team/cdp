@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>CDP Remote Debug</title>
+  <link rel="stylesheet" href="/debug/assets/app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">CDP Remote</div>
+    <div class="connection"><span id="connection-dot" class="dot"></span><span id="connection-text">未连接</span></div>
+    <button id="back" class="icon-button" title="后退" aria-label="后退">←</button>
+    <button id="forward" class="icon-button" title="前进" aria-label="前进">→</button>
+    <button id="reload" class="icon-button" title="刷新" aria-label="刷新">↻</button>
+    <form id="navigate-form" class="address-form">
+      <input id="address" type="url" placeholder="https://example.com" autocomplete="off">
+      <button type="submit">打开</button>
+    </form>
+    <button id="new-tab" class="icon-button" title="新建标签" aria-label="新建标签">+</button>
+    <button id="capture-shot" class="icon-button" title="下载截图" aria-label="下载截图">▣</button>
+  </header>
+
+  <div id="modal-banner" class="modal-banner hidden">
+    <strong id="modal-label"></strong>
+    <span id="modal-message" class="modal-message"></span>
+    <div id="dialog-actions" class="inline-actions hidden">
+      <input id="dialog-prompt" placeholder="Prompt response">
+      <button id="dialog-accept">接受</button>
+      <button id="dialog-dismiss" class="secondary">取消</button>
+    </div>
+    <form id="upload-form" class="inline-actions hidden">
+      <input id="upload-ref" placeholder="文件输入 ref">
+      <input id="upload-files" type="file" multiple>
+      <button type="submit">上传</button>
+    </form>
+  </div>
+
+  <main class="workspace">
+    <aside class="tabs-panel">
+      <div class="panel-heading">
+        <div><span class="eyebrow">Browser</span><h1>标签页</h1></div>
+        <button id="refresh-tabs" class="icon-button" title="刷新标签" aria-label="刷新标签">↻</button>
+      </div>
+      <div id="tabs" class="tab-list"></div>
+      <div class="runtime-summary">
+        <div><span>状态</span><strong id="tab-state">--</strong></div>
+        <div><span>阶段</span><strong id="tab-phase">--</strong></div>
+        <div><span>Snapshot</span><strong id="snapshot-id">--</strong></div>
+        <div><span>Viewers</span><strong id="viewer-count">0</strong></div>
+      </div>
+    </aside>
+
+    <section class="remote-panel">
+      <div class="panel-heading remote-heading">
+        <div><span class="eyebrow">Viewport</span><h2 id="page-title">未选择页面</h2></div>
+        <label class="toggle"><input id="sync-hover" type="checkbox"><span>同步悬停</span></label>
+      </div>
+      <div id="viewport" class="viewport" tabindex="0">
+        <img id="frame" alt="浏览器实时画面" draggable="false">
+        <div id="empty-frame" class="empty-frame">选择标签页以连接画面</div>
+        <div id="cursor" class="cursor hidden"></div>
+      </div>
+      <form id="text-form" class="text-command">
+        <input id="text-input" placeholder="发送文本或粘贴内容" autocomplete="off">
+        <button type="submit">发送</button>
+      </form>
+      <div class="status-line">
+        <span id="status">等待操作</span>
+        <span id="frame-metrics">--</span>
+      </div>
+      <div id="warnings" class="warnings hidden"></div>
+    </section>
+
+    <aside class="inspector-panel">
+      <nav class="inspector-tabs" aria-label="调试视图">
+        <button data-panel="snapshot" class="active">Snapshot</button>
+        <button data-panel="find">Find</button>
+        <button data-panel="console">Console</button>
+        <button data-panel="network">Network</button>
+        <button data-panel="evaluate">Evaluate</button>
+      </nav>
+
+      <section id="panel-snapshot" class="inspector-view active">
+        <div class="view-toolbar">
+          <strong>Markdown</strong>
+          <button id="capture-snapshot">重新捕获</button>
+        </div>
+        <pre id="snapshot-markdown" class="markdown-output">尚无 snapshot</pre>
+      </section>
+
+      <section id="panel-find" class="inspector-view">
+        <form id="find-form" class="field-grid">
+          <input id="find-text" placeholder="文本">
+          <input id="find-role" placeholder="role">
+          <input id="find-name" placeholder="accessible name">
+          <button type="submit">查找</button>
+        </form>
+        <div id="find-results" class="result-list"></div>
+      </section>
+
+      <section id="panel-console" class="inspector-view">
+        <div class="view-toolbar"><strong>Console</strong><button data-clear="console" class="secondary">清空</button></div>
+        <div id="console-events" class="event-list"></div>
+      </section>
+
+      <section id="panel-network" class="inspector-view">
+        <div class="view-toolbar"><strong>Network</strong><button data-clear="network" class="secondary">清空</button></div>
+        <div id="network-events" class="event-list"></div>
+      </section>
+
+      <section id="panel-evaluate" class="inspector-view">
+        <form id="evaluate-form">
+          <input id="evaluate-ref" placeholder="可选 ref">
+          <textarea id="evaluate-expression" rows="8" spellcheck="false" placeholder="document.title"></textarea>
+          <button type="submit">执行</button>
+        </form>
+        <pre id="evaluate-result" class="evaluate-output">--</pre>
+      </section>
+    </aside>
+  </main>
+  <script type="module" src="/debug/assets/app.js"></script>
+</body>
+</html>

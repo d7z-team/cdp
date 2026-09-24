@@ -1,0 +1,59 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>fixture-actionability-obscured-frame</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { margin: 0; font-family: sans-serif; }
+    [hidden] { display: none !important; }
+    .frame-scroll { position: relative; height: 100%; overflow: auto; padding: 12px; }
+    .covered-target {
+      display: block;
+      height: 36px;
+      margin-top: calc(100vh - 76px);
+      padding: 8px;
+      background: #e8f1ff;
+    }
+    .after-target { height: 100vh; }
+    .frame-footer {
+      position: fixed;
+      z-index: 2;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      height: 72px;
+      padding: 24px 16px;
+      background: white;
+      border-top: 1px solid #b8c0cc;
+      text-align: right;
+    }
+    .parent-stage { height: 100%; display: grid; place-items: center; }
+    button { min-width: 180px; min-height: 44px; }
+  </style>
+</head>
+<body>
+  <section id="local-mode" class="frame-scroll">
+    <span class="covered-target" data-testid="frame-footer-target">frame-footer-target</span>
+    <div class="after-target"></div>
+    <div class="frame-footer" data-testid="frame-footer">关闭 保存</div>
+  </section>
+  <section id="parent-mode" class="parent-stage" hidden>
+    <button type="button" data-testid="parent-footer-target">parent-footer-target</button>
+  </section>
+  <div data-testid="frame-obscured-state" hidden>idle</div>
+  <script>
+    const parentMode = new URLSearchParams(location.search).get('mode') === 'parent';
+    document.querySelector('#local-mode').hidden = parentMode;
+    document.querySelector('#parent-mode').hidden = !parentMode;
+    const state = document.querySelector('[data-testid="frame-obscured-state"]');
+    document.querySelector('[data-testid="frame-footer-target"]').addEventListener('click', () => {
+      state.textContent = 'frame-footer-clicked';
+    });
+    document.querySelector('[data-testid="parent-footer-target"]').addEventListener('click', () => {
+      state.textContent = 'parent-footer-clicked';
+    });
+  </script>
+</body>
+</html>

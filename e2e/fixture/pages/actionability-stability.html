@@ -1,0 +1,65 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>fixture-actionability-stability</title>
+  <style>
+    html { scroll-behavior: smooth; }
+    body { margin: 0; padding: 24px; overflow-x: hidden; font-family: sans-serif; }
+    button { min-width: 80px; min-height: 40px; }
+    .hover-zone {
+      width: 320px;
+      height: 72px;
+      display: flex;
+      align-items: center;
+      border: 1px solid #ccd4df;
+    }
+    .transition-target { transition: transform 320ms linear; }
+    .hover-zone:hover .transition-target { transform: translateX(110px); }
+    .spacer { height: 140vh; }
+    .lower-panel { display: grid; gap: 24px; padding-bottom: 80px; }
+    .moving-target { animation: keep-moving 400ms linear infinite alternate; }
+    @keyframes keep-moving {
+      from { transform: translateX(0); }
+      to { transform: translateX(40px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="hover-zone">
+    <button type="button" class="transition-target" data-testid="transition-target">transition target</button>
+  </div>
+  <output data-testid="transition-count">0</output>
+  <output data-testid="scroll-count">0</output>
+
+  <div class="spacer"></div>
+
+  <section class="lower-panel">
+    <button type="button" data-testid="smooth-scroll-target">smooth scroll target</button>
+    <output data-testid="smooth-scroll-count">0</output>
+
+    <button type="button" class="moving-target" data-testid="moving-target">moving target</button>
+    <output data-testid="moving-count">0</output>
+
+    <button type="button" data-testid="detach-target">detach target</button>
+    <output data-testid="detach-count">0</output>
+  </section>
+
+  <script>
+    const increment = (testID) => {
+      const output = document.querySelector(`[data-testid="${testID}"]`);
+      output.textContent = String(Number(output.textContent) + 1);
+    };
+    document.querySelector('[data-testid="transition-target"]').addEventListener('click', () => increment('transition-count'));
+    document.querySelector('[data-testid="smooth-scroll-target"]').addEventListener('click', () => increment('smooth-scroll-count'));
+    document.querySelector('[data-testid="moving-target"]').addEventListener('click', () => increment('moving-count'));
+
+    let scrollCount = 0;
+    window.addEventListener('scroll', () => {
+      scrollCount += 1;
+      document.querySelector('[data-testid="scroll-count"]').textContent = String(scrollCount);
+    }, {passive: true});
+
+  </script>
+</body>
+</html>

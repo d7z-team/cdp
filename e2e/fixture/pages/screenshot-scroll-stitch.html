@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Screenshot Scroll Stitch</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      width: 1400px;
+      min-width: 1400px;
+      height: 1300px;
+      min-height: 1300px;
+      background: rgb(245 245 245);
+      font-family: sans-serif;
+    }
+
+    .page-board {
+      position: relative;
+      width: 1400px;
+      height: 1300px;
+      background: rgb(245 245 245);
+    }
+
+    .page-marker {
+      position: absolute;
+      width: 120px;
+      height: 100px;
+    }
+
+    .page-marker.top-left {
+      left: 1px;
+      top: 1px;
+      background: rgb(220 20 30);
+    }
+
+    .page-marker.top-right {
+      left: 1279px;
+      top: 1px;
+      background: rgb(20 90 230);
+    }
+
+    .page-marker.bottom-left {
+      left: 1px;
+      top: 1199px;
+      background: rgb(245 210 20);
+    }
+
+    .page-marker.bottom-right {
+      left: 1279px;
+      top: 1199px;
+      background: rgb(30 175 70);
+    }
+
+    .scroll-box,
+    .hidden-box,
+    .self-scroll-box {
+      position: absolute;
+      top: 260px;
+      width: 150px;
+      height: 120px;
+      border: 0;
+      background: rgb(255 255 255);
+    }
+
+    .scroll-box {
+      left: 260px;
+      overflow: auto;
+    }
+
+    .hidden-box {
+      left: 560px;
+      overflow: hidden;
+    }
+
+    .self-scroll-box {
+      left: 820px;
+      overflow: auto;
+    }
+
+    .context-frame {
+      position: absolute;
+      left: 1120px;
+      top: 360px;
+      width: 180px;
+      height: 90px;
+      border: 0;
+      background: rgb(255 255 255);
+    }
+
+    .target-space {
+      position: relative;
+      width: 360px;
+      height: 300px;
+    }
+
+    .self-scroll-content {
+      position: relative;
+      width: 320px;
+      height: 260px;
+    }
+
+    .shot-target {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 320px;
+      height: 260px;
+      box-sizing: border-box;
+      border: 1px solid rgb(255 0 200);
+      background: rgb(255 255 255);
+    }
+
+    .quadrant {
+      position: absolute;
+    }
+
+    .q1 {
+      left: 1px;
+      top: 1px;
+      width: 159px;
+      height: 129px;
+      background: rgb(230 35 35);
+    }
+
+    .q2 {
+      left: 160px;
+      top: 1px;
+      width: 159px;
+      height: 129px;
+      background: rgb(35 95 235);
+    }
+
+    .q3 {
+      left: 1px;
+      top: 130px;
+      width: 159px;
+      height: 129px;
+      background: rgb(245 215 30);
+    }
+
+    .q4 {
+      left: 160px;
+      top: 130px;
+      width: 159px;
+      height: 129px;
+      background: rgb(30 180 80);
+    }
+
+    .edge-probe {
+      position: absolute;
+      pointer-events: none;
+    }
+
+    .edge-right-outer {
+      right: 1px;
+      top: 8px;
+      bottom: 8px;
+      width: 3px;
+      background: rgb(15 210 210);
+    }
+
+    .edge-right-middle {
+      right: 4px;
+      top: 8px;
+      bottom: 8px;
+      width: 3px;
+      background: rgb(250 120 20);
+    }
+
+    .edge-right-inner {
+      right: 7px;
+      top: 8px;
+      bottom: 8px;
+      width: 3px;
+      background: rgb(140 45 225);
+    }
+
+    .edge-bottom-outer {
+      left: 8px;
+      right: 8px;
+      bottom: 1px;
+      height: 3px;
+      background: rgb(145 235 35);
+    }
+
+    .edge-bottom-middle {
+      left: 8px;
+      right: 8px;
+      bottom: 4px;
+      height: 3px;
+      background: rgb(250 80 165);
+    }
+
+    .edge-bottom-inner {
+      left: 8px;
+      right: 8px;
+      bottom: 7px;
+      height: 3px;
+      background: rgb(30 80 165);
+    }
+
+    .edge-corner-outer {
+      right: 1px;
+      bottom: 1px;
+      width: 3px;
+      height: 3px;
+      background: rgb(0 115 125);
+    }
+
+    .edge-corner-middle {
+      right: 4px;
+      bottom: 4px;
+      width: 3px;
+      height: 3px;
+      background: rgb(190 45 45);
+    }
+
+    .edge-corner-inner {
+      right: 7px;
+      bottom: 7px;
+      width: 3px;
+      height: 3px;
+      background: rgb(70 70 230);
+    }
+  </style>
+</head>
+<body>
+  <main class="page-board">
+    <div class="page-marker top-left" aria-hidden="true"></div>
+    <div class="page-marker top-right" aria-hidden="true"></div>
+    <div class="page-marker bottom-left" aria-hidden="true"></div>
+    <div class="page-marker bottom-right" aria-hidden="true"></div>
+
+    <section class="scroll-box" aria-label="scrollable screenshot parent">
+      <div class="target-space">
+        <div class="shot-target" data-testid="scroll-stitch-target">
+          <div class="quadrant q1"></div>
+          <div class="quadrant q2"></div>
+          <div class="quadrant q3"></div>
+          <div class="quadrant q4"></div>
+          <div class="edge-probe edge-right-outer"></div>
+          <div class="edge-probe edge-right-middle"></div>
+          <div class="edge-probe edge-right-inner"></div>
+          <div class="edge-probe edge-bottom-outer"></div>
+          <div class="edge-probe edge-bottom-middle"></div>
+          <div class="edge-probe edge-bottom-inner"></div>
+          <div class="edge-probe edge-corner-outer"></div>
+          <div class="edge-probe edge-corner-middle"></div>
+          <div class="edge-probe edge-corner-inner"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="hidden-box" aria-label="hidden screenshot parent">
+      <div class="target-space">
+        <div class="shot-target" data-testid="hidden-clip-target">
+          <div class="quadrant q1"></div>
+          <div class="quadrant q2"></div>
+          <div class="quadrant q3"></div>
+          <div class="quadrant q4"></div>
+          <div class="edge-probe edge-right-outer"></div>
+          <div class="edge-probe edge-right-middle"></div>
+          <div class="edge-probe edge-right-inner"></div>
+          <div class="edge-probe edge-bottom-outer"></div>
+          <div class="edge-probe edge-bottom-middle"></div>
+          <div class="edge-probe edge-bottom-inner"></div>
+          <div class="edge-probe edge-corner-outer"></div>
+          <div class="edge-probe edge-corner-middle"></div>
+          <div class="edge-probe edge-corner-inner"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="self-scroll-box" data-testid="self-scroll-box" aria-label="self scroll screenshot target">
+      <div class="self-scroll-content">
+        <div class="quadrant q1"></div>
+        <div class="quadrant q2"></div>
+        <div class="quadrant q3"></div>
+        <div class="quadrant q4"></div>
+        <div class="edge-probe edge-right-outer"></div>
+        <div class="edge-probe edge-right-middle"></div>
+        <div class="edge-probe edge-right-inner"></div>
+        <div class="edge-probe edge-bottom-outer"></div>
+        <div class="edge-probe edge-bottom-middle"></div>
+        <div class="edge-probe edge-bottom-inner"></div>
+        <div class="edge-probe edge-corner-outer"></div>
+        <div class="edge-probe edge-corner-middle"></div>
+        <div class="edge-probe edge-corner-inner"></div>
+      </div>
+    </section>
+    <iframe class="context-frame" title="screenshot context frame" src="{{BASE_URL}}/frame-content"></iframe>
+  </main>
+</body>
+</html>

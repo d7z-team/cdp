@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>fixture-selector-xpath</title></head>
+<body>
+  <div>
+    <label>He said "go" and it's fine</label>
+    <input id="quoted-input" data-testid="quoted-input" value="quoted-value" />
+  </div>
+
+  <fieldset>
+    <legend>Profile Settings</legend>
+    <input id="legend-input" data-testid="legend-input" value="legend-value" />
+  </fieldset>
+
+  <section>
+    <h2>Billing Address</h2>
+    <button data-testid="section-button">Submit Order</button>
+  </section>
+
+  <div role="button" aria-label="Open Panel" data-testid="role-aria">Open</div>
+  <div role="button" data-testid="role-text">Launch Control</div>
+  <button class="cta primary stable" data-testid="class-token-btn">Mixed Case Save</button>
+
+  <input type="submit" data-testid="submit-input" value="Send Form Now" />
+
+  <ul id="entries">
+    <li data-testid="entry">First Entry</li>
+    <li data-testid="entry">Second Entry</li>
+  </ul>
+
+  <button data-testid="direct-text">Direct Only</button>
+
+  <table data-testid="data-table">
+    <tr>
+      <th>Name</th>
+      <th>Action</th>
+    </tr>
+    <tr>
+      <td>Alpha Row</td>
+      <td><button data-testid="alpha-edit">Edit Alpha</button></td>
+    </tr>
+    <tr>
+      <td>Beta Row</td>
+      <td><button data-testid="beta-edit">Edit Beta</button></td>
+    </tr>
+  </table>
+</body>
+</html>

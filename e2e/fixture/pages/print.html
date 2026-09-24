@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>fixture-print</title>
+  <style>
+    @media print {
+      body {
+        background: rgb(245, 245, 245);
+      }
+      [data-testid="print-target"] {
+        border: 4px solid rgb(20, 120, 220);
+        padding: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div data-testid="print-target">print me</div>
+    <p data-testid="print-events"></p>
+    <button type="button" data-testid="print-trigger" onclick="triggerPrint()">print</button>
+  </main>
+  <script>
+    const events = [];
+
+    function syncEvents() {
+      document.querySelector('[data-testid="print-events"]').textContent = events.join(',');
+    }
+
+    function triggerPrint() {
+      window.print();
+    }
+
+    window.addEventListener('beforeprint', () => {
+      events.push('beforeprint');
+      document.querySelector('[data-testid="print-target"]').setAttribute('data-print-state', 'before');
+      syncEvents();
+    });
+
+    window.addEventListener('afterprint', () => {
+      events.push('afterprint');
+      document.querySelector('[data-testid="print-target"]').setAttribute('data-print-state', 'after');
+      syncEvents();
+    });
+
+    syncEvents();
+  </script>
+</body>
+</html>

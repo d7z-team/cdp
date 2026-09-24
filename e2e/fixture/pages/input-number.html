@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Number Input Fixture</title>
+  <style>
+    body { font-family: sans-serif; margin: 24px; line-height: 1.5; }
+    .field { margin-bottom: 18px; }
+    label { display: block; font-weight: 600; margin-bottom: 6px; }
+    input { padding: 8px 10px; width: 240px; }
+    pre { margin-top: 8px; padding: 10px; background: #f6f8fa; border: 1px solid #d0d7de; white-space: pre-wrap; }
+    .ant-input-number {
+      width: 240px;
+      border: 1px solid #d0d7de;
+      border-radius: 8px;
+      background: #fff;
+      overflow: hidden;
+    }
+    .ant-input-number-input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+    }
+    .ant-input-number:hover .ant-input-number-input-wrap,
+    .ant-input-number:focus-within .ant-input-number-input-wrap {
+      animation: subtle-shift 280ms ease-in-out infinite alternate;
+    }
+    .ant-input-number-as-amount {
+      color: #57606a;
+      font-weight: 600;
+    }
+    .ant-input-number-input.ant-input-number-with-amount {
+      width: 100%;
+      padding: 0;
+      border: 0;
+      outline: 0;
+      background: transparent;
+    }
+    .el-input-number {
+      width: 260px;
+      border: 1px solid #d0d7de;
+      border-radius: 8px;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .el-input-number input {
+      width: 150px;
+      border: 0;
+      padding: 0;
+      background: #f6f8fa;
+    }
+    .el-input-number .suffix {
+      margin-left: auto;
+      color: #0969da;
+      font-size: 13px;
+    }
+    .el-input-number[aria-disabled="true"] {
+      color: #8c959f;
+      background: #f6f8fa;
+      cursor: not-allowed;
+    }
+    @keyframes subtle-shift {
+      from { transform: translateX(0); }
+      to { transform: translateX(0.45px); }
+    }
+  </style>
+</head>
+<body>
+  <div class="field">
+    <label for="decimal-number">Decimal Number</label>
+    <input id="decimal-number" data-testid="decimal-number" type="number" step="0.01">
+    <pre data-testid="decimal-number-state"></pre>
+  </div>
+
+  <div class="field">
+    <label for="amount-number">Amount Number</label>
+    <input id="amount-number" data-testid="amount-number" type="number" step="0.01" min="0">
+    <pre data-testid="amount-number-state"></pre>
+  </div>
+
+  <div class="field">
+    <label for="money-text">Money Text</label>
+    <input id="money-text" data-testid="money-text" type="text" inputmode="decimal">
+    <pre data-testid="money-text-state"></pre>
+  </div>
+
+  <div class="field">
+    <label for="sumfee-input">Composite Amount</label>
+    <div class="ant-input-number" id="sumfee" data-testid="composite-number-shell">
+      <div class="ant-input-number-handler-wrap" aria-hidden="true"></div>
+      <div role="spinbutton" aria-valuemin="-9007199254740991" aria-valuenow="0" class="ant-input-number-input-wrap">
+        <div class="ant-input-number-as-amount">￥</div>
+        <input
+          id="sumfee-input"
+          data-testid="composite-number-input"
+          autocomplete="off"
+          step="0.01"
+          class="ant-input-number-input ant-input-number-with-amount"
+        >
+      </div>
+    </div>
+    <pre data-testid="composite-number-input-state"></pre>
+  </div>
+
+  <div class="field">
+    <label for="disabled-inner-input">Disabled Inner Composite</label>
+    <div class="el-input-number" data-testid="disabled-inner-shell">
+      <input
+        id="disabled-inner-input"
+        data-testid="disabled-inner-input"
+        class="el-input__inner"
+        role="spinbutton"
+        type="text"
+        disabled
+        value="click shell"
+      >
+      <span class="suffix">activate</span>
+    </div>
+    <pre data-testid="disabled-inner-state">idle</pre>
+  </div>
+
+  <div class="field">
+    <label for="aria-disabled-inner-input">Aria Disabled Composite</label>
+    <div class="el-input-number" data-testid="aria-disabled-shell" aria-disabled="true">
+      <input
+        id="aria-disabled-inner-input"
+        data-testid="aria-disabled-inner-input"
+        class="el-input__inner"
+        role="spinbutton"
+        type="text"
+        value=""
+      >
+      <span class="suffix">blocked</span>
+    </div>
+    <pre data-testid="aria-disabled-state">idle</pre>
+    <pre data-testid="aria-disabled-input-state"></pre>
+  </div>
+
+  <div class="field">
+    <button type="button" data-testid="native-disabled-button" disabled>Disabled Button</button>
+    <pre data-testid="native-disabled-button-state">idle</pre>
+  </div>
+
+  <script>
+    (function() {
+      function snapshot(input) {
+        var validity = input.validity || {};
+        return JSON.stringify({
+          value: input.value,
+          valueAsNumber: Number.isNaN(input.valueAsNumber) ? null : input.valueAsNumber,
+          badInput: !!validity.badInput,
+          stepMismatch: !!validity.stepMismatch,
+          rangeOverflow: !!validity.rangeOverflow,
+          rangeUnderflow: !!validity.rangeUnderflow,
+          valid: !!validity.valid
+        });
+      }
+
+      function wire(id, stateTestId) {
+        var input = document.getElementById(id);
+        var state = document.querySelector('[data-testid="' + (stateTestId || (id + '-state')) + '"]');
+        var render = function() {
+          state.textContent = snapshot(input);
+        };
+        input.addEventListener('input', render);
+        input.addEventListener('change', render);
+        render();
+      }
+
+      wire('decimal-number');
+      wire('amount-number');
+      wire('money-text');
+      wire('sumfee-input', 'composite-number-input-state');
+      wire('aria-disabled-inner-input', 'aria-disabled-input-state');
+
+      document.querySelector('[data-testid="disabled-inner-shell"]').addEventListener('click', function() {
+        document.querySelector('[data-testid="disabled-inner-state"]').textContent = 'activated';
+      });
+      document.querySelector('[data-testid="aria-disabled-shell"]').addEventListener('click', function() {
+        document.querySelector('[data-testid="aria-disabled-state"]').textContent = 'activated';
+      });
+      document.querySelector('[data-testid="native-disabled-button"]').addEventListener('click', function() {
+        document.querySelector('[data-testid="native-disabled-button-state"]').textContent = 'activated';
+      });
+    })();
+  </script>
+</body>
+</html>

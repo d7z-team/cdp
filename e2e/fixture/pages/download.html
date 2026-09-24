@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Download Test</title></head>
+<body>
+<h1>Download Test</h1>
+
+<h2>Anchor Download</h2>
+<a data-testid="download-anchor" href="{{BASE_URL}}/api/download/sample" download="sample.txt">Download sample.txt</a>
+
+<h2>Blob Download</h2>
+<button data-testid="download-blob-btn" onclick="triggerBlobDownload()">Download Blob</button>
+<script>
+function triggerBlobDownload() {
+  var blob = new Blob(['hello from blob'], { type: 'text/plain' });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'blob-file.txt';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+
+<h2>Multiple Downloads</h2>
+<button data-testid="download-multi-btn" onclick="triggerMultiDownload()">Download 3 Files</button>
+<script>
+function triggerMultiDownload() {
+  for (var i = 1; i <= 3; i++) {
+    (function(idx) {
+      setTimeout(function() {
+        var blob = new Blob(['content ' + idx], { type: 'text/plain' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'multi-' + idx + '.txt';
+        a.click();
+        URL.revokeObjectURL(url);
+      }, idx * 100);
+    })(i);
+  }
+}
+</script>
+
+<h2>JS Navigate Download</h2>
+<button data-testid="download-js-btn" onclick="triggerJSDownload()">JS Download</button>
+<script>
+function triggerJSDownload() {
+  window.location.href = '{{BASE_URL}}/api/download/data';
+}
+</script>
+
+</body>
+</html>

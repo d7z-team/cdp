@@ -1,0 +1,77 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: make generate check-ts build-assets
+      - name: Check generated files are committed
+        run: |
+          changes=$(git status --porcelain -- internal/engine/callgen_core.go internal/webassets/src/bindings internal/webassets/dest)
+          if [[ -n "$changes" ]]; then
+            printf '%s\n' "$changes"
+            git diff -- internal/engine/callgen_core.go internal/webassets/src/bindings internal/webassets/dest
+            exit 1
+          fi
+      - run: make vet
+      - run: go test -race -count=1 -timeout=10m ./...
+
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - suite: library
+            diagnostics: 'off'
+          - suite: library
+            diagnostics: runtime
+          - suite: mcp
+            diagnostics: runtime
+    env:
+      CDP_E2E_BROWSER: '1'
+      CDP_E2E_HEADLESS: '1'
+      CDP_E2E_DIAGNOSTICS: ${{ matrix.diagnostics }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: go.sum
+      - name: Select runner Chrome
+        run: |
+          chrome=$(command -v google-chrome)
+          "$chrome" --version
+          echo "CDP_E2E_CHROME=$chrome" >> "$GITHUB_ENV"
+      - name: Run browser tests
+        env:
+          SUITE: ${{ matrix.suite }}
+        run: go test -v -count=1 -timeout=15m "./e2e/scenarios/$SUITE"

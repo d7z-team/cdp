@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>fixture-scroll-actions-frame</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 16px;
+    }
+    .frame-spacer {
+      height: 720px;
+      border: 1px dashed #d0d7de;
+      color: #57606a;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 20px;
+    }
+    .target-panel {
+      margin-top: 28px;
+      margin-bottom: 620px;
+      padding: 18px;
+      border: 1px solid #d0d7de;
+      border-radius: 10px;
+      background: #f6f8fa;
+    }
+    .target-panel > * + * {
+      margin-top: 10px;
+    }
+    label {
+      display: block;
+      font-weight: 600;
+    }
+    input,
+    textarea,
+    button {
+      box-sizing: border-box;
+      width: 100%;
+      min-height: 40px;
+      font: inherit;
+    }
+    textarea {
+      min-height: 68px;
+    }
+  </style>
+</head>
+<body>
+  <div class="frame-spacer">Frame controls below this area require iframe scrolling.</div>
+
+  <section class="target-panel" aria-label="frame below fold controls">
+    <button
+      type="button"
+      data-testid="frame-below-fold-button"
+      onclick="document.querySelector('[data-testid=&quot;frame-button-state&quot;]').textContent='frame-button-clicked'"
+    >frame-below-fold-button</button>
+
+    <label for="frame-below-fold-input">frame-below-fold-input</label>
+    <input
+      id="frame-below-fold-input"
+      data-testid="frame-below-fold-input"
+      oninput="document.querySelector('[data-testid=&quot;frame-input-state&quot;]').textContent=this.value"
+    >
+
+    <label for="frame-below-fold-notes">frame-below-fold-notes</label>
+    <textarea
+      id="frame-below-fold-notes"
+      data-testid="frame-below-fold-notes"
+      oninput="document.querySelector('[data-testid=&quot;frame-textarea-state&quot;]').textContent=this.value"
+    ></textarea>
+  </section>
+
+  <section aria-label="frame states">
+    <div data-testid="frame-button-state">idle</div>
+    <div data-testid="frame-input-state"></div>
+    <div data-testid="frame-textarea-state"></div>
+  </section>
+</body>
+</html>

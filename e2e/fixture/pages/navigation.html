@@ -1,0 +1,13 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>fixture-navigation</title></head>
+<body>
+  <a id="exact-link" data-testid="exact-link" href="{{BASE_URL}}/navigation-done?step=exact">go-exact</a>
+  <button
+    type="button"
+    id="prefix-btn"
+    data-testid="prefix-btn"
+    onclick="window.location.href='{{BASE_URL}}/navigation-done?step=prefix&token=42'"
+  >go-prefix</button>
+</body>
+</html>

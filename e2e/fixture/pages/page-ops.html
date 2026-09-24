@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>PageOps Test</title>
+<style>
+  #scroll-target { margin-top: 2000px; width: 100px; height: 50px; background: green; }
+  #highlight-target { width: 200px; height: 50px; background: lightgray; margin: 10px; text-align: center; line-height: 50px; }
+  #alert-area { min-height: 30px; border: 1px solid #ccc; padding: 5px; margin: 5px 0; }
+  #kbd-display { min-height: 30px; border: 1px solid #999; padding: 5px; margin: 5px 0; }
+</style>
+</head>
+<body>
+<h1>PageOps Test</h1>
+
+<h2>Page-level Keyboard</h2>
+<input type="text" data-testid="page-kbd-input" placeholder="focus me" value="">
+<div id="kbd-display"></div>
+<script>
+(function() {
+  var inp = document.querySelector('[data-testid=page-kbd-input]');
+  var disp = document.getElementById('kbd-display');
+  inp.addEventListener('input', function() { disp.textContent = inp.value; });
+  inp.addEventListener('keydown', function(e) {
+    var mods = [];
+    if (e.ctrlKey) mods.push('Ctrl');
+    if (e.altKey) mods.push('Alt');
+    if (e.shiftKey) mods.push('Shift');
+    disp.textContent = 'key=' + e.key + ' mods=' + mods.join('+');
+  });
+})();
+</script>
+
+<h2>Alert Show / Hide</h2>
+<div id="alert-area"></div>
+<script>
+window.__cdpAlertShow = function(text) { document.getElementById('alert-area').textContent = 'ALERT: ' + text; };
+window.__cdpAlertHide = function() { document.getElementById('alert-area').textContent = ''; };
+</script>
+
+<h2>Scroll To Target</h2>
+<div data-testid="scroll-target" id="scroll-target">Scrolled Here</div>
+
+<h2>Highlight Target</h2>
+<div data-testid="highlight-target" id="highlight-target">Highlight Me</div>
+
+<h2>URL & Title</h2>
+<!-- tested via GetURL/GetTitle -->
+
+<h2>Navigation Chain</h2>
+<nav>
+  <a data-testid="nav-refresh-link" href="/page-ops?r=1">same page (test refresh)</a><br>
+  <a data-testid="nav-next-link" href="/navigation">goto navigation</a><br>
+</nav>
+
+<h2>WaitForTimeout</h2>
+<div data-testid="after-delay">initial</div>
+<script>
+setTimeout(function() {
+  var el = document.querySelector('[data-testid=after-delay]');
+  if (el) el.textContent = 'changed after 500ms';
+}, 500);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>MCP Frame</title>
+</head>
+<body>
+  <button id="frame-btn">frame-button</button>
+  <output id="frame-output">frame-idle</output>
+  <script>
+    document.getElementById('frame-btn').onclick = () => {
+      setTimeout(() => { document.getElementById('frame-output').textContent = 'frame-working'; }, 80);
+      setTimeout(() => { document.getElementById('frame-output').textContent = 'frame-settled'; }, 260);
+    };
+  </script>
+</body>
+</html>

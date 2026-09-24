@@ -1,0 +1,23 @@
+{
+  "name": "cdp",
+  "version": "1.0.0",
+  "description": "",
+  "license": "MIT",
+  "author": "",
+  "type": "commonjs",
+  "main": "webpack.config.js",
+  "scripts": {
+    "build": "webpack --config webpack.config.js"
+  },
+  "devDependencies": {
+    "@types/webpack": "^5.28.5",
+    "ts-loader": "^9.5.7",
+    "typescript": "^6.0.2",
+    "webpack": "^5.106.1",
+    "webpack-cli": "^7.0.2"
+  },
+  "dependencies": {
+    "@noble/ciphers": "2.4.0",
+    "fontoxpath": "^3.34.0"
+  }
+}

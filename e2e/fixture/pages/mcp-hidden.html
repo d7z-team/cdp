@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>MCP Hidden Elements Test</title>
+<style>
+  body { margin: 20px; font: 16px system-ui, sans-serif; }
+  .btn { padding: 10px 24px; border: 2px solid #333; background: #eee; cursor: pointer; border-radius: 4px; }
+</style>
+</head>
+<body>
+  <h2>Visible Elements</h2>
+  <button class="btn" id="btn-visible">Visible Button</button>
+  <input id="input-visible" type="text" placeholder="visible input" />
+
+  <h2>Hidden Elements</h2>
+  <button class="btn" id="btn-display-none" style="display:none">Display None</button>
+  <button class="btn" id="btn-visibility-hidden" style="visibility:hidden">Visibility Hidden</button>
+  <button class="btn" id="btn-opacity-zero" style="opacity:0">Opacity Zero</button>
+  <button class="btn" id="btn-aria-hidden" aria-hidden="true">Aria Hidden</button>
+  <div hidden><button class="btn" id="btn-hidden-attr">HTML Hidden Attr</button></div>
+  <input id="input-hidden-type" type="hidden" value="secret" />
+  <input id="input-disabled" type="text" disabled placeholder="disabled input" />
+  <button class="btn" id="btn-zero-size" style="width:0;height:0;overflow:hidden;border:none;padding:0">Tiny</button>
+</body>
+</html>

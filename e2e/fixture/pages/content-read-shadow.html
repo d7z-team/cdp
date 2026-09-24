@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Content Read - Shadow DOM</title>
+</head>
+<body>
+  <h1>Shadow DOM Outer Content</h1>
+  <shadow-article>
+    <p slot="body">Projected slot content from light DOM.</p>
+  </shadow-article>
+  <script>
+    customElements.define('shadow-article', class extends HTMLElement {
+      constructor() {
+        super();
+        const root = this.attachShadow({mode: 'open'});
+        root.innerHTML = `
+          <article>
+            <h2>Shadow Title</h2>
+            <p>Shadow body paragraph captured from the component.</p>
+            <slot name="body"></slot>
+          </article>
+        `;
+      }
+    });
+  </script>
+</body>
+</html>

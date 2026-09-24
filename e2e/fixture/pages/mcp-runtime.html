@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>MCP Runtime</title>
+  <style>
+    body { margin: 20px; font: 16px sans-serif; }
+    #offscreen { margin-top: 1400px; }
+    #scroll-box { width: 240px; height: 90px; overflow: auto; border: 1px solid #888; }
+    #scroll-content { width: 500px; height: 500px; }
+    #drag-source, #drag-target { display: inline-block; width: 90px; height: 50px; margin: 8px; border: 1px solid #222; }
+  </style>
+</head>
+<body>
+  <h1>MCP Runtime</h1>
+  <button id="counter" aria-label="Counter">Clicked 0</button>
+  <button id="remote-target">Remote Target</button><output id="remote-output">remote-idle</output>
+  <label>Email <input id="email" type="text"></label>
+  <label><input id="remember" type="checkbox"> Remember me</label>
+  <label>Country <select id="country"><option value="cn">China</option><option value="us">United States</option></select></label>
+  <button id="disabled" disabled>Disabled Action</button>
+  <button id="xhr">Load Data</button><output id="xhr-output">Idle</output>
+  <button id="hover">Hover Target</button><output id="hover-output"></output>
+  <output id="key-output"></output>
+  <button id="dialog">Open Dialog</button>
+  <button id="prompt-dialog">Open Prompt</button><output id="prompt-output"></output>
+  <button id="confirm-dialog">Open Confirm</button><output id="confirm-output"></output>
+  <button id="sequential-dialogs">Open Sequential Dialogs</button><output id="sequential-output"></output>
+  <label>Upload <input id="upload" type="file"></label><output id="upload-output"></output>
+  <a id="download" href="{{BASE_URL}}/api/download/mcp.txt" download>Download report</a>
+  <div id="drag-source" role="button" draggable="true">Drag Source</div><div id="drag-target" role="button">Drop Target</div><output id="drop-output"></output>
+  <div id="scroll-box" aria-label="Scrollable"><div id="scroll-content">Scrollable content</div></div>
+  <snapshot-shadow></snapshot-shadow>
+  <iframe title="Same Frame" src="{{BASE_URL}}/mcp-frame" style="width:100%;height:120px"></iframe>
+  <iframe id="cross-frame" title="Cross Frame" style="width:100%;height:120px"></iframe>
+  <button id="offscreen">Offscreen Action</button>
+  <script>
+    let count = 0;
+    counter.onclick = () => { counter.textContent = `Clicked ${++count}`; };
+    document.getElementById('remote-target').onclick = () => { document.getElementById('remote-output').textContent = 'remote-click'; };
+    document.getElementById('remote-target').ondblclick = () => { document.getElementById('remote-output').textContent = 'remote-double'; };
+    document.getElementById('remote-target').oncontextmenu = event => { event.preventDefault(); document.getElementById('remote-output').textContent = 'remote-right'; };
+    xhr.onclick = async () => { xhr_output = null; const data = await fetch('/api/data').then(r => r.json()); document.getElementById('xhr-output').textContent = data.updated ? 'Loaded' : 'Failed'; };
+    hover.onmouseenter = () => { document.getElementById('hover-output').textContent = 'Hovered'; };
+    document.addEventListener('keydown', event => { document.getElementById('key-output').textContent = event.key; });
+    dialog.onclick = () => alert('MCP dialog');
+    document.getElementById('prompt-dialog').onclick = () => { document.getElementById('prompt-output').textContent = prompt('MCP prompt', 'default answer') ?? 'dismissed'; };
+    document.getElementById('confirm-dialog').onclick = () => { document.getElementById('confirm-output').textContent = confirm('MCP confirm') ? 'accepted' : 'dismissed'; };
+    document.getElementById('sequential-dialogs').onclick = () => { alert('MCP first'); alert('MCP second'); document.getElementById('sequential-output').textContent = 'complete'; };
+    upload.onchange = () => { document.getElementById('upload-output').textContent = upload.files[0]?.name || ''; };
+    document.getElementById('drag-source').addEventListener('dragstart', event => event.dataTransfer.setData('text/plain', 'source'));
+    document.addEventListener('dragover', event => event.preventDefault());
+    document.getElementById('drag-target').addEventListener('drop', event => { event.preventDefault(); document.getElementById('drop-output').textContent = 'Dropped'; });
+    customElements.define('snapshot-shadow', class extends HTMLElement {
+      constructor() {
+        super();
+        const root = this.attachShadow({mode: 'open'});
+        root.innerHTML = '<button aria-label="Shadow Action">Shadow button</button><output></output>';
+        root.querySelector('button').onclick = () => { root.querySelector('output').textContent = 'Shadow clicked'; };
+      }
+    });
+    document.getElementById('cross-frame').src = "data:text/html,<button id='cross-button' onclick=\"this.textContent='cross-clicked'\">frame-button</button>";
+  </script>
+</body>
+</html>

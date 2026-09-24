@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Content Read - Event Bound Elements</title>
+</head>
+<body>
+  <h1>Event Bound Elements Test</h1>
+  <p>Standard content before interactive elements.</p>
+  <div id="onclick-div" onclick="handleClick()" tabindex="0" role="link">Onclick + Tabindex + Role=Link</div>
+  <span id="onclick-span" onclick="handleSpan()">Onclick Span</span>
+  <span id="tabindex-span" tabindex="0">Tabindex Span</span>
+  <span id="role-link-span" role="link">Role Link Span</span>
+  <span id="plain-span">Plain Non-Interactive Span</span>
+  <p>Standard content after interactive elements.</p>
+</body>
+</html>

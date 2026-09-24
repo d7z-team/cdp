@@ -1,0 +1,144 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>fixture-actionability-hover-reveal</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 32px;
+      font-family: sans-serif;
+      background: #f8fafc;
+      color: #0f172a;
+    }
+    main {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+    }
+    td {
+      min-width: 54px;
+      height: 42px;
+      border: 1px solid #cbd5e1;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .cell {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 32px;
+    }
+    .icon-link {
+      display: inline-flex;
+      width: 30px;
+      height: 30px;
+      align-items: center;
+      justify-content: center;
+      color: #2563eb;
+      cursor: pointer;
+      visibility: hidden;
+    }
+    .el-table__row:hover .icon-link,
+    .action-cell:hover .icon-link {
+      visibility: visible;
+    }
+    .icon-link svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+      pointer-events: none;
+    }
+    #display-none-action {
+      display: none;
+    }
+    #display-none-input {
+      display: none;
+    }
+    .visible-fallback {
+      display: inline-flex;
+      margin-top: 20px;
+      padding: 8px 12px;
+      color: #fff;
+      background: #2563eb;
+      cursor: pointer;
+    }
+    .state {
+      margin-top: 18px;
+      min-height: 22px;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <table data-testid="hover-table">
+      <tbody>
+        <tr class="el-table__row" data-testid="hover-row">
+          <td>1</td>
+          <td>2</td>
+          <td>3</td>
+          <td>4</td>
+          <td>5</td>
+          <td>6</td>
+          <td>7</td>
+          <td>8</td>
+          <td>9</td>
+          <td>10</td>
+          <td>11</td>
+          <td>12</td>
+          <td>13</td>
+          <td>14</td>
+          <td>15</td>
+          <td>16</td>
+          <td>17</td>
+          <td>18</td>
+          <td>19</td>
+          <td>20</td>
+          <td>21</td>
+          <td rowspan="1" colspan="1" class="el-table_1_column_22 is-center action-cell">
+            <div class="cell">
+              <a data-testid="audit-action" title="Sample Action" class="icon-link el-link el-link--primary">
+                <span class="el-link--inner">
+                  <svg aria-hidden="true" data-icon="audit" class="svg-icon" viewBox="0 0 24 24">
+                    <path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"></path>
+                  </svg>
+                </span>
+              </a>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <a id="display-none-action" data-testid="display-none-action">hidden fallback</a>
+    <a id="visible-fallback-action" data-testid="visible-fallback-action" class="visible-fallback">visible fallback</a>
+
+    <input id="display-none-input" data-testid="display-none-input" value="">
+    <input id="visible-input-fallback" data-testid="visible-input-fallback" value="" placeholder="visible input fallback">
+
+    <div class="state" data-testid="hover-state">idle</div>
+    <div class="state" data-testid="fallback-state">idle</div>
+    <div class="state" data-testid="input-fallback-state">idle</div>
+  </main>
+
+  <script>
+    document.querySelector('[data-testid="audit-action"]').addEventListener('click', () => {
+      document.querySelector('[data-testid="hover-state"]').textContent = 'audit-clicked';
+    });
+    document.querySelector('[data-testid="display-none-action"]').addEventListener('click', () => {
+      document.querySelector('[data-testid="fallback-state"]').textContent = 'hidden-clicked';
+    });
+    document.querySelector('[data-testid="visible-fallback-action"]').addEventListener('click', () => {
+      document.querySelector('[data-testid="fallback-state"]').textContent = 'visible-clicked';
+    });
+    document.querySelector('[data-testid="visible-input-fallback"]').addEventListener('input', (event) => {
+      document.querySelector('[data-testid="input-fallback-state"]').textContent = event.target.value;
+    });
+  </script>
+</body>
+</html>

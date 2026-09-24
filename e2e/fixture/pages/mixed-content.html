@@ -1,0 +1,15 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Secure document</title>
+<output id="status">waiting</output>
+<script>
+window.mixedLoaded = false;
+const target = new URL('/mixed.js', location.href);
+target.protocol = 'http:'; target.hostname = 'insecure.test';
+target.port = new URLSearchParams(location.search).get('port');
+const script = document.createElement('script');
+script.src = target.href;
+script.onerror = () => document.querySelector('#status').textContent = 'blocked';
+script.onload = () => document.querySelector('#status').textContent = 'loaded';
+document.head.append(script);
+</script>

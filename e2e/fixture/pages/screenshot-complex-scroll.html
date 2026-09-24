@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Screenshot Complex Scroll</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      width: 2400px;
+      min-width: 2400px;
+      height: 1800px;
+      min-height: 1800px;
+      background: rgb(246 246 246);
+      font-family: sans-serif;
+    }
+
+    .board {
+      position: relative;
+      width: 2400px;
+      height: 1800px;
+      background: rgb(246 246 246);
+    }
+
+    .page-marker {
+      position: absolute;
+      width: 150px;
+      height: 110px;
+    }
+
+    .page-marker.top-left {
+      left: 1px;
+      top: 1px;
+      background: rgb(225 30 30);
+    }
+
+    .page-marker.top-right {
+      left: 2249px;
+      top: 1px;
+      background: rgb(30 95 230);
+    }
+
+    .page-marker.bottom-left {
+      left: 1px;
+      top: 1689px;
+      background: rgb(245 215 30);
+    }
+
+    .page-marker.bottom-right {
+      left: 2249px;
+      top: 1689px;
+      background: rgb(30 180 80);
+    }
+
+    .deep-outer {
+      position: absolute;
+      left: 420px;
+      top: 260px;
+      width: 190px;
+      height: 170px;
+      overflow: auto;
+      background: rgb(255 255 255);
+      border: 0;
+    }
+
+    .deep-outer-space {
+      position: relative;
+      width: 780px;
+      height: 700px;
+    }
+
+    .deep-middle {
+      position: absolute;
+      left: 360px;
+      top: 320px;
+      width: 180px;
+      height: 160px;
+      overflow: auto;
+      background: rgb(255 255 255);
+      border: 0;
+    }
+
+    .deep-middle-space {
+      position: relative;
+      width: 720px;
+      height: 620px;
+    }
+
+    .deep-inner {
+      position: absolute;
+      left: 260px;
+      top: 240px;
+      width: 170px;
+      height: 150px;
+      overflow: auto;
+      background: rgb(255 255 255);
+      border: 0;
+    }
+
+    .deep-inner-space {
+      position: relative;
+      width: 650px;
+      height: 560px;
+    }
+
+    .axis-box {
+      position: absolute;
+      left: 820px;
+      top: 280px;
+      width: 172px;
+      height: 135px;
+      overflow-x: hidden;
+      overflow-y: auto;
+      background: rgb(255 255 255);
+      border: 0;
+    }
+
+    .axis-space {
+      position: relative;
+      width: 430px;
+      height: 380px;
+    }
+
+    .shot-target {
+      position: absolute;
+      left: 0;
+      top: 0;
+      box-sizing: border-box;
+      border: 1px solid rgb(255 0 200);
+      background: rgb(255 255 255);
+    }
+
+    .deep-target {
+      width: 460px;
+      height: 360px;
+    }
+
+    .axis-target {
+      width: 400px;
+      height: 330px;
+    }
+
+    .target-paint {
+      position: absolute;
+      left: 1px;
+      top: 1px;
+      right: 1px;
+      bottom: 1px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+    }
+
+    .q-red {
+      background: rgb(230 35 35);
+    }
+
+    .q-blue {
+      background: rgb(35 95 235);
+    }
+
+    .q-yellow {
+      background: rgb(245 215 30);
+    }
+
+    .q-green {
+      background: rgb(30 180 80);
+    }
+
+    .edge-probe {
+      position: absolute;
+      pointer-events: none;
+    }
+
+    .edge-right-outer {
+      right: 1px;
+      top: 8px;
+      bottom: 8px;
+      width: 3px;
+      background: rgb(15 210 210);
+    }
+
+    .edge-right-middle {
+      right: 4px;
+      top: 8px;
+      bottom: 8px;
+      width: 3px;
+      background: rgb(250 120 20);
+    }
+
+    .edge-right-inner {
+      right: 7px;
+      top: 8px;
+      bottom: 8px;
+      width: 3px;
+      background: rgb(140 45 225);
+    }
+
+    .edge-bottom-outer {
+      left: 8px;
+      right: 8px;
+      bottom: 1px;
+      height: 3px;
+      background: rgb(145 235 35);
+    }
+
+    .edge-bottom-middle {
+      left: 8px;
+      right: 8px;
+      bottom: 4px;
+      height: 3px;
+      background: rgb(250 80 165);
+    }
+
+    .edge-bottom-inner {
+      left: 8px;
+      right: 8px;
+      bottom: 7px;
+      height: 3px;
+      background: rgb(30 80 165);
+    }
+
+    .edge-corner-outer {
+      right: 1px;
+      bottom: 1px;
+      width: 3px;
+      height: 3px;
+      background: rgb(0 115 125);
+    }
+
+    .edge-corner-middle {
+      right: 4px;
+      bottom: 4px;
+      width: 3px;
+      height: 3px;
+      background: rgb(190 45 45);
+    }
+
+    .edge-corner-inner {
+      right: 7px;
+      bottom: 7px;
+      width: 3px;
+      height: 3px;
+      background: rgb(70 70 230);
+    }
+  </style>
+</head>
+<body>
+  <main class="board">
+    <div class="page-marker top-left" aria-hidden="true"></div>
+    <div class="page-marker top-right" aria-hidden="true"></div>
+    <div class="page-marker bottom-left" aria-hidden="true"></div>
+    <div class="page-marker bottom-right" aria-hidden="true"></div>
+
+    <section class="deep-outer" data-testid="deep-outer" aria-label="outer scroll layer">
+      <div class="deep-outer-space">
+        <section class="deep-middle" data-testid="deep-middle" aria-label="middle scroll layer">
+          <div class="deep-middle-space">
+            <section class="deep-inner" data-testid="deep-inner" aria-label="inner scroll layer">
+              <div class="deep-inner-space">
+                <div class="shot-target deep-target" data-testid="deep-scroll-target">
+                  <div class="target-paint">
+                    <div class="q-red"></div>
+                    <div class="q-blue"></div>
+                    <div class="q-yellow"></div>
+                    <div class="q-green"></div>
+                  </div>
+                  <div class="edge-probe edge-right-outer"></div>
+                  <div class="edge-probe edge-right-middle"></div>
+                  <div class="edge-probe edge-right-inner"></div>
+                  <div class="edge-probe edge-bottom-outer"></div>
+                  <div class="edge-probe edge-bottom-middle"></div>
+                  <div class="edge-probe edge-bottom-inner"></div>
+                  <div class="edge-probe edge-corner-outer"></div>
+                  <div class="edge-probe edge-corner-middle"></div>
+                  <div class="edge-probe edge-corner-inner"></div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <section class="axis-box" data-testid="axis-box" aria-label="x hidden y scroll layer">
+      <div class="axis-space">
+        <div class="shot-target axis-target" data-testid="axis-hidden-target">
+          <div class="target-paint">
+            <div class="q-red"></div>
+            <div class="q-blue"></div>
+            <div class="q-yellow"></div>
+            <div class="q-green"></div>
+          </div>
+          <div class="edge-probe edge-right-outer"></div>
+          <div class="edge-probe edge-right-middle"></div>
+          <div class="edge-probe edge-right-inner"></div>
+          <div class="edge-probe edge-bottom-outer"></div>
+          <div class="edge-probe edge-bottom-middle"></div>
+          <div class="edge-probe edge-bottom-inner"></div>
+          <div class="edge-probe edge-corner-outer"></div>
+          <div class="edge-probe edge-corner-middle"></div>
+          <div class="edge-probe edge-corner-inner"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

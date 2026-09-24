@@ -1,0 +1,234 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>fixture-actionability-svg-delegate</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 32px;
+      font-family: sans-serif;
+      background: #f5f7fb;
+      color: #0f172a;
+    }
+    main {
+      max-width: 1160px;
+      margin: 0 auto;
+    }
+    h1 {
+      margin: 0 0 12px;
+      font-size: 24px;
+    }
+    p {
+      margin: 0 0 24px;
+      color: #475569;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 24px;
+    }
+    .panel {
+      padding: 20px;
+      border: 1px solid #cbd5e1;
+      background: #fff;
+    }
+    .cell-shell {
+      position: relative;
+      width: 240px;
+      height: 88px;
+    }
+    table {
+      border-collapse: collapse;
+    }
+    td {
+      width: 240px;
+      height: 88px;
+      border: 1px solid #94a3b8;
+      background: #fff;
+      text-align: center;
+      vertical-align: middle;
+      font-size: 16px;
+    }
+    .state {
+      margin-top: 14px;
+      min-height: 20px;
+      color: #1e293b;
+    }
+    .delegate-svg {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      cursor: pointer;
+    }
+    .delegate-svg rect {
+      fill: rgba(14, 165, 233, 0.18);
+      stroke: rgba(2, 132, 199, 0.8);
+      stroke-width: 2;
+    }
+    .blocker {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(239, 68, 68, 0.88);
+      color: #fff;
+      font-weight: 700;
+    }
+    .icon-link {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      z-index: 2;
+      display: inline-flex;
+      width: 34px;
+      height: 34px;
+      align-items: center;
+      justify-content: center;
+      color: #2563eb;
+      cursor: pointer;
+      transform: translate(-50%, -50%);
+    }
+    .icon-link svg {
+      width: 22px;
+      height: 22px;
+      fill: currentColor;
+    }
+    .is-hidden .cell {
+      visibility: hidden;
+    }
+    .spinner-blocker svg {
+      width: 22px;
+      height: 22px;
+      fill: currentColor;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Actionability Delegate Fixture</h1>
+    <p>Cells cover SVG delegate and obstruction variants.</p>
+
+    <section class="grid">
+      <div class="panel">
+        <div class="cell-shell">
+          <table aria-label="delegate table">
+            <tbody>
+              <tr>
+                <td data-testid="delegate-cell">delegate-cell</td>
+              </tr>
+            </tbody>
+          </table>
+          <svg class="delegate-svg" data-testid="delegate-svg" viewBox="0 0 240 88" aria-label="delegate-svg">
+            <rect x="2" y="2" width="236" height="84" rx="8"></rect>
+          </svg>
+        </div>
+        <div class="state" data-testid="delegate-state">idle</div>
+      </div>
+
+      <div class="panel">
+        <div class="cell-shell">
+          <table aria-label="blocked table">
+            <tbody>
+              <tr>
+                <td data-testid="blocked-cell">blocked-cell</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="blocker" data-testid="blocked-overlay">blocked-overlay</div>
+        </div>
+        <div class="state" data-testid="blocked-state">idle</div>
+      </div>
+
+      <div class="panel">
+        <div class="cell-shell">
+          <table aria-label="small svg icon delegate table">
+            <tbody>
+              <tr>
+                <td data-testid="icon-cell" class="el-table_1_column_10 is-center is-hidden">
+                  <div class="cell">icon-cell</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <a data-testid="icon-link" class="icon-link" title="Sample Action">
+            <span class="el-link--inner">
+              <svg class="svg-icon" aria-hidden="true" viewBox="0 0 24 24">
+                <path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"></path>
+              </svg>
+            </span>
+          </a>
+        </div>
+        <div class="state" data-testid="icon-state">idle</div>
+      </div>
+
+      <div class="panel">
+        <div class="cell-shell">
+          <table aria-label="svg spinner blocker table">
+            <tbody>
+              <tr>
+                <td data-testid="spinner-blocked-cell">spinner-blocked-cell</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="blocker spinner-blocker" data-testid="spinner-blocker">
+            <svg aria-hidden="true" viewBox="0 0 24 24">
+              <path d="M12 2a10 10 0 0 1 10 10h-3a7 7 0 0 0-7-7z"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="state" data-testid="spinner-blocked-state">idle</div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const delegateState = document.querySelector('[data-testid="delegate-state"]');
+    const blockedState = document.querySelector('[data-testid="blocked-state"]');
+    const delegateCell = document.querySelector('[data-testid="delegate-cell"]');
+    const blockedCell = document.querySelector('[data-testid="blocked-cell"]');
+    const delegateSVG = document.querySelector('[data-testid="delegate-svg"]');
+    const blockedOverlay = document.querySelector('[data-testid="blocked-overlay"]');
+    const iconState = document.querySelector('[data-testid="icon-state"]');
+    const iconCell = document.querySelector('[data-testid="icon-cell"]');
+    const iconLink = document.querySelector('[data-testid="icon-link"]');
+    const spinnerBlockedState = document.querySelector('[data-testid="spinner-blocked-state"]');
+    const spinnerBlockedCell = document.querySelector('[data-testid="spinner-blocked-cell"]');
+    const spinnerBlocker = document.querySelector('[data-testid="spinner-blocker"]');
+
+    delegateCell.addEventListener('click', () => {
+      delegateState.textContent = 'cell-clicked';
+    });
+
+    delegateSVG.addEventListener('click', () => {
+      delegateState.textContent = 'delegate-clicked';
+    });
+
+    blockedCell.addEventListener('click', () => {
+      blockedState.textContent = 'cell-clicked';
+    });
+
+    blockedOverlay.addEventListener('click', () => {
+      blockedState.textContent = 'overlay-clicked';
+    });
+
+    iconCell.addEventListener('click', () => {
+      iconState.textContent = 'cell-clicked';
+    });
+
+    iconLink.addEventListener('click', () => {
+      iconState.textContent = 'icon-clicked';
+    });
+
+    spinnerBlockedCell.addEventListener('click', () => {
+      spinnerBlockedState.textContent = 'cell-clicked';
+    });
+
+    spinnerBlocker.addEventListener('click', () => {
+      spinnerBlockedState.textContent = 'blocker-clicked';
+    });
+  </script>
+</body>
+</html>

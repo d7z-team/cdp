@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Content Read - Infinite Scroll</title>
+  <style>
+    body { font: 16px/1.5 system-ui, sans-serif; margin: 0; padding: 24px; }
+    .chunk { margin: 0 0 28px; }
+    .spacer { height: 70vh; }
+  </style>
+</head>
+<body>
+  <h1>Infinite Scroll Feed</h1>
+  <p>Initial article before lazy content.</p>
+  <div id="feed"></div>
+  <div class="spacer"></div>
+  <script>
+    const feed = document.getElementById('feed');
+    let page = 0;
+    let loading = false;
+    function appendChunk(index) {
+      const section = document.createElement('section');
+      section.className = 'chunk';
+      section.innerHTML = `<h2>Lazy Section ${index}</h2><p>${`Chunk ${index} body `.repeat(80)}</p>`;
+      feed.appendChild(section);
+    }
+    function maybeLoad() {
+      if (loading || page >= 4) return;
+      if (window.innerHeight + window.scrollY + 80 < document.body.scrollHeight) return;
+      loading = true;
+      const next = page + 1;
+      setTimeout(() => {
+        appendChunk(next);
+        page = next;
+        loading = false;
+      }, 120);
+    }
+    window.addEventListener('scroll', maybeLoad, {passive: true});
+    maybeLoad();
+  </script>
+</body>
+</html>

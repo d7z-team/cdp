@@ -1,0 +1,24 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Frame transport security</title>
+<script>
+  window.packets = [];
+  window.plainResponses = 0;
+  window.addEventListener('message', event => {
+    if (event.data instanceof Uint8Array) window.packets.push(event.data.slice());
+    if (event.data?.type === '__cdp_bridge__' && event.data.direction === 'response') window.plainResponses++;
+  });
+</script>
+<body>
+  <button id="target">Target</button>
+  <script>
+    if (window === window.top) {
+      for (let i = 0; i < 2; i++) {
+        const frame = document.createElement('iframe');
+        frame.id = 'frame-' + i;
+        frame.src = '{{BASE_URL}}/transport-security?child=' + i;
+        document.body.appendChild(frame);
+      }
+    }
+  </script>
+</body>

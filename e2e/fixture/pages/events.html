@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Events Test</title>
+<style>
+  #event-log { font-family: monospace; white-space: pre-wrap; margin-top: 10px; padding: 5px; border: 1px solid #ccc; min-height: 50px; }
+  #click-counter { font-size: 24px; }
+  #right-click-area { width: 200px; height: 100px; background: lightblue; display: flex; align-items: center; justify-content: center; user-select: none; }
+  .draggable { width: 80px; height: 60px; background: orange; display: inline-flex; align-items: center; justify-content: center; cursor: grab; user-select: none; margin: 10px; }
+  .drop-zone { width: 150px; height: 100px; border: 2px dashed #666; display: inline-flex; align-items: center; justify-content: center; margin: 10px; }
+  #keyboard-display { min-height: 30px; border: 1px solid #999; padding: 5px; margin-top: 5px; }
+  #shortcut-display { min-height: 30px; border: 1px solid #999; padding: 5px; margin-top: 5px; }
+  #type-display { min-height: 30px; border: 1px solid #999; padding: 5px; margin-top: 5px; }
+  .editor-like-fixture { position: relative; width: 420px; min-height: 96px; border: 1px solid #777; padding: 8px; font-family: monospace; white-space: pre-wrap; }
+  .editor-like-fixture textarea { position: absolute; left: 8px; top: 8px; width: 1px; height: 1px; opacity: 0; }
+  .editor-like-fixture .cm-content { min-height: 72px; outline: none; }
+  .plain-non-editor { width: 220px; height: 40px; border: 1px solid #999; }
+</style>
+</head>
+<body>
+<h1>Events Test</h1>
+
+<h2>Double Click</h2>
+<button data-testid="dblclick-btn" data-count="0">DoubleClick Count: 0</button>
+<script>
+(function() {
+  var btn = document.querySelector('[data-testid=dblclick-btn]');
+  btn.addEventListener('dblclick', function() {
+    var count = parseInt(btn.getAttribute('data-count')) + 1;
+    btn.setAttribute('data-count', count);
+    btn.textContent = 'DoubleClick Count: ' + count;
+  });
+})();
+</script>
+
+<h2>Right Click</h2>
+<div data-testid="rightclick-area" id="right-click-area">Right click me</div>
+<script>
+(function() {
+  var area = document.querySelector('[data-testid=rightclick-area]');
+  var log = document.createElement('div');
+  log.id = 'event-log';
+  area.parentNode.insertBefore(log, area.nextSibling);
+  area.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+    log.textContent = 'contextmenu';
+    area.setAttribute('data-rightclicked', 'true');
+  });
+})();
+</script>
+
+<h2>Drag To</h2>
+<div data-testid="drag-source" class="draggable" draggable="true" data-dragged="">Drag me</div>
+<div data-testid="drag-target" class="drop-zone" data-drop="">Drop here</div>
+<script>
+(function() {
+  var source = document.querySelector('[data-testid=drag-source]');
+  var target = document.querySelector('[data-testid=drag-target]');
+  source.addEventListener('dragstart', function(e) {
+    source.setAttribute('data-dragged', 'start');
+    e.dataTransfer.setData('text/plain', 'test');
+  });
+  target.addEventListener('dragover', function(e) { e.preventDefault(); });
+  target.addEventListener('drop', function(e) {
+    e.preventDefault();
+    target.setAttribute('data-drop', 'received');
+    target.textContent = 'Dropped!';
+  });
+})();
+</script>
+
+<h2>Keyboard: Press, Shortcut, Type</h2>
+<input type="text" data-testid="key-input" placeholder="focus and type" value="">
+<button type="button" data-testid="key-button">Keyboard target</button>
+<label><input type="checkbox" data-testid="key-checkbox"> Keyboard checkbox</label>
+<div id="keyboard-display"></div>
+<div id="shortcut-display"></div>
+<div id="type-display"></div>
+<script>
+(function() {
+  var inp = document.querySelector('[data-testid=key-input]');
+  var kb = document.getElementById('keyboard-display');
+  var sc = document.getElementById('shortcut-display');
+  var tp = document.getElementById('type-display');
+  window.__keyInputEvents = [];
+  ['click', 'focus', 'keydown', 'input', 'keyup'].forEach(function(type) {
+    inp.addEventListener(type, function(e) {
+      window.__keyInputEvents.push({
+        type: type,
+        isTrusted: e.isTrusted,
+        key: e.key || '',
+        ctrlKey: !!e.ctrlKey,
+        value: inp.value
+      });
+    });
+  });
+  window.__keyboardTargetEvents = [];
+  function wireKeyboardTarget(name, el) {
+    ['click', 'focus', 'keydown', 'keyup'].forEach(function(type) {
+      el.addEventListener(type, function(e) {
+        window.__keyboardTargetEvents.push({
+          name: name,
+          type: type,
+          isTrusted: e.isTrusted,
+          key: e.key || '',
+          ctrlKey: !!e.ctrlKey,
+          checked: !!el.checked
+        });
+      });
+    });
+  }
+  wireKeyboardTarget('button', document.querySelector('[data-testid=key-button]'));
+  wireKeyboardTarget('checkbox', document.querySelector('[data-testid=key-checkbox]'));
+
+  inp.addEventListener('keydown', function(e) {
+    var mods = [];
+    if (e.ctrlKey) mods.push('Ctrl');
+    if (e.altKey) mods.push('Alt');
+    if (e.shiftKey) mods.push('Shift');
+    if (e.metaKey) mods.push('Meta');
+    kb.textContent = 'key=' + e.key + ' mods=' + mods.join('+');
+    if (mods.length > 0) {
+      sc.textContent = 'shortcut=' + mods.join('+') + '+' + e.key;
+    }
+  });
+  inp.addEventListener('input', function() {
+    tp.textContent = inp.value;
+  });
+})();
+</script>
+
+<h2>Input Probe</h2>
+<input type="text" data-testid="fill-input" value="">
+<input type="text" data-testid="replace-input" value="old-value">
+<input type="text" data-testid="fallback-input" value="">
+<input type="text" data-testid="masked-input" value="masked-old">
+<div data-testid="editable-input" contenteditable="true">old editable</div>
+<div data-testid="editable-nested" contenteditable="true"><span>old</span> <b>nested</b></div>
+<div data-testid="input-fallback-scope">
+  <input type="hidden" data-testid="hidden-backing-input" value="hidden-old">
+  <input type="text" data-testid="fallback-visible-input" value="">
+</div>
+<div data-testid="rich-editor-wrapper" class="editor-shell">
+  <textarea data-testid="rich-backing-textarea" style="display:none">hidden-rich</textarea>
+  <div data-testid="rich-editor" class="ql-editor" contenteditable="true"><p>old <strong>rich</strong></p></div>
+</div>
+<div data-testid="iframe-rich-wrapper" class="editor-shell">
+  <iframe data-testid="rich-editor-frame" srcdoc="<body contenteditable='true'><p>old frame rich</p></body>"></iframe>
+</div>
+<div data-testid="editor-like" class="editor-like-fixture cm-editor" role="textbox" aria-multiline="true" tabindex="0">
+  <textarea data-testid="editor-like-hidden">old sql</textarea>
+  <div data-testid="editor-like-content" class="cm-content">
+    <div class="cm-line"><span data-testid="editor-like-leaf">old sql</span></div>
+  </div>
+</div>
+<div data-testid="plain-non-editor-div" class="plain-non-editor">plain div</div>
+<script>
+(function() {
+  window.__inputProbe = {};
+  function valueOf(el) {
+    if ('value' in el) return el.value;
+    return el.textContent || '';
+  }
+  function wire(name, el) {
+    window.__inputProbe[name] = [];
+    ['click', 'focus', 'keydown', 'beforeinput', 'input', 'keyup', 'change', 'blur'].forEach(function(type) {
+      el.addEventListener(type, function(e) {
+        window.__inputProbe[name].push({
+          type: type,
+          isTrusted: e.isTrusted,
+          inputType: e.inputType || '',
+          data: e.data == null ? '' : String(e.data),
+          key: e.key || '',
+          code: e.code || '',
+          ctrlKey: !!e.ctrlKey,
+          value: valueOf(el)
+        });
+      });
+    });
+  }
+  wire('fill', document.querySelector('[data-testid=fill-input]'));
+  wire('replace', document.querySelector('[data-testid=replace-input]'));
+  wire('fallback', document.querySelector('[data-testid=fallback-input]'));
+  wire('masked', document.querySelector('[data-testid=masked-input]'));
+  wire('editable', document.querySelector('[data-testid=editable-input]'));
+  wire('editableNested', document.querySelector('[data-testid=editable-nested]'));
+  wire('visibleFallback', document.querySelector('[data-testid=fallback-visible-input]'));
+  wire('rich', document.querySelector('[data-testid=rich-editor]'));
+  wire('editorLike', document.querySelector('[data-testid=editor-like-hidden]'));
+  document.querySelector('[data-testid=fallback-input]').addEventListener('beforeinput', function(e) {
+    e.preventDefault();
+  });
+  document.querySelector('[data-testid=masked-input]').addEventListener('keydown', function(e) {
+    if (e.ctrlKey && String(e.key).toLowerCase() === 'a') {
+      e.preventDefault();
+    }
+  });
+  var editor = document.querySelector('[data-testid=editor-like]');
+  var editorTextarea = document.querySelector('[data-testid=editor-like-hidden]');
+  var editorLeaf = document.querySelector('[data-testid=editor-like-leaf]');
+  function renderEditor() {
+    editorLeaf.textContent = editorTextarea.value;
+  }
+  editor.addEventListener('mousedown', function() {
+    editorTextarea.focus();
+  });
+  editor.addEventListener('click', function() {
+    editorTextarea.focus();
+  });
+  editor.addEventListener('focus', function() {
+    editorTextarea.focus();
+  });
+  editorTextarea.addEventListener('input', renderEditor);
+  renderEditor();
+})();
+</script>
+
+<h2>File Upload</h2>
+<input type="file" data-testid="file-input" id="file-input">
+
+</body>
+</html>

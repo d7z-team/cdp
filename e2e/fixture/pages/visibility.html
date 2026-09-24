@@ -1,0 +1,24 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>fixture-visibility</title></head>
+<body>
+  <div id="visible-box" data-testid="visible-box">visible</div>
+  <div id="hidden-box" data-testid="hidden-box" style="display:none;">hidden</div>
+  <div data-testid="opacity-parent" style="opacity:0;">
+    <button data-testid="opacity-child">opacity child</button>
+  </div>
+  <div data-testid="visibility-parent" style="visibility:hidden;">
+    <button data-testid="visibility-child">visibility child</button>
+  </div>
+  <div data-testid="contents-parent" style="display:contents;">
+    <span data-testid="contents-child">contents child</span>
+  </div>
+  <div style="height: 1800px;"></div>
+  <button id="offscreen-button" data-testid="offscreen-button" onclick="this.textContent='offscreen-clicked'">offscreen-button</button>
+  <div id="multi-visible-zone">
+    <button data-testid="dup-btn-a" style="display:none;" class="dup-visible-btn">A</button>
+    <button data-testid="dup-btn-b" class="dup-visible-btn">B</button>
+    <button data-testid="dup-btn-c" style="display:none;" class="dup-visible-btn">C</button>
+  </div>
+</body>
+</html>

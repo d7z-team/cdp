@@ -1,0 +1,120 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>fixture-scroll-actions</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 24px;
+    }
+    .hero {
+      min-height: 130vh;
+      border: 1px dashed #d0d7de;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 32px;
+      color: #57606a;
+    }
+    .target-panel {
+      margin-top: 40px;
+      margin-bottom: 120vh;
+      padding: 24px;
+      border: 1px solid #d0d7de;
+      border-radius: 10px;
+      background: #f6f8fa;
+      max-width: 420px;
+    }
+    .target-panel > * + * {
+      margin-top: 12px;
+    }
+    label {
+      display: block;
+      font-weight: 600;
+    }
+    input,
+    select,
+    textarea,
+    button {
+      box-sizing: border-box;
+      width: 100%;
+      min-height: 42px;
+      font: inherit;
+    }
+    input[type="checkbox"] {
+      width: auto;
+      min-height: 0;
+      margin-right: 8px;
+    }
+    textarea {
+      min-height: 72px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <p>Controls below this fold require page scrolling before they can be interacted with.</p>
+    </section>
+
+    <section class="target-panel" aria-label="below fold controls">
+      <button
+        type="button"
+        data-testid="below-fold-button"
+        onclick="document.querySelector('[data-testid=&quot;button-state&quot;]').textContent='page-button-clicked'"
+      >below-fold-button</button>
+
+      <label for="below-fold-input">below-fold-input</label>
+      <input
+        id="below-fold-input"
+        data-testid="below-fold-input"
+        oninput="document.querySelector('[data-testid=&quot;input-state&quot;]').textContent=this.value"
+      >
+
+      <label for="below-fold-notes">below-fold-notes</label>
+      <textarea
+        id="below-fold-notes"
+        data-testid="below-fold-notes"
+        oninput="document.querySelector('[data-testid=&quot;textarea-state&quot;]').textContent=this.value"
+      ></textarea>
+
+      <label for="below-fold-city">below-fold-city</label>
+      <select
+        id="below-fold-city"
+        data-testid="below-fold-city"
+        onchange="document.querySelector('[data-testid=&quot;select-state&quot;]').textContent=this.value"
+      >
+        <option value="">choose</option>
+        <option value="beijing">Beijing</option>
+        <option value="shanghai">Shanghai</option>
+      </select>
+
+      <label>
+        <input
+          type="checkbox"
+          data-testid="below-fold-check"
+          onchange="document.querySelector('[data-testid=&quot;check-state&quot;]').textContent=String(this.checked)"
+        >
+        below-fold-check
+      </label>
+
+      <button
+        type="button"
+        data-testid="below-fold-secondary"
+        onclick="document.querySelector('[data-testid=&quot;secondary-state&quot;]').textContent='secondary-clicked'"
+      >below-fold-secondary</button>
+    </section>
+
+    <section aria-label="states">
+      <div data-testid="button-state">idle</div>
+      <div data-testid="input-state"></div>
+      <div data-testid="textarea-state"></div>
+      <div data-testid="select-state"></div>
+      <div data-testid="check-state">false</div>
+      <div data-testid="secondary-state">idle</div>
+    </section>
+  </main>
+</body>
+</html>

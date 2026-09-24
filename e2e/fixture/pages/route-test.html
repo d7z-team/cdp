@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Route Test</title>
+  <style>
+    body { font-family: sans-serif; padding: 24px; }
+    .result { margin: 8px 0; padding: 8px; background: #f0f0f0; min-height: 20px; border-radius: 4px; }
+    button { margin: 4px; padding: 8px 16px; }
+  </style>
+</head>
+<body>
+  <h1>Route Interception Test</h1>
+
+  <button id="btn-hello">Fetch /api/hello</button>
+  <button id="btn-data">Fetch /api/data</button>
+  <button id="btn-echo">Fetch /api/echo</button>
+  <div id="result" class="result">-</div>
+
+  <script>
+    function doFetch(url, targetId) {
+      var el = document.getElementById(targetId || 'result');
+      el.textContent = 'loading...';
+      fetch(url)
+        .then(function(r) { return r.text(); })
+        .then(function(text) { el.textContent = text; })
+        .catch(function(e) { el.textContent = 'error:' + e.message; });
+    }
+    document.getElementById('btn-hello').onclick = function() { doFetch('/api/hello'); };
+    document.getElementById('btn-data').onclick = function() { doFetch('/api/data'); };
+    document.getElementById('btn-echo').onclick = function() { doFetch('/api/echo'); };
+  </script>
+</body>
+</html>

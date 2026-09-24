@@ -1,0 +1,120 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>fixture-actionability-obscured-scroll</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: sans-serif; }
+    [hidden] { display: none !important; }
+    .dialog {
+      position: fixed;
+      inset: 20px;
+      width: min(640px, calc(100vw - 40px));
+      margin: auto;
+      border: 1px solid #b8c0cc;
+      background: white;
+      overflow: hidden;
+    }
+    .dialog-scroll {
+      height: 100%;
+      overflow: auto;
+      padding: 16px;
+    }
+    .covered-target {
+      display: block;
+      height: 40px;
+      margin-top: calc(100vh - 130px);
+      padding: 10px;
+      background: #e8f1ff;
+    }
+    .after-target { height: 100vh; }
+    .dialog-footer {
+      position: absolute;
+      z-index: 2;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      height: 120px;
+      padding: 40px 24px;
+      background: white;
+      border-top: 1px solid #b8c0cc;
+      text-align: right;
+    }
+    .center-stage {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+    }
+    button { min-width: 180px; min-height: 44px; }
+    .blocking-overlay {
+      position: fixed;
+      z-index: 10;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(255, 255, 255, 0.94);
+    }
+    .state {
+      position: fixed;
+      z-index: 20;
+      top: 4px;
+      left: 4px;
+    }
+  </style>
+</head>
+<body>
+  <section id="footer-scenario">
+    <div class="dialog" role="dialog" aria-label="footer recovery dialog">
+      <div class="dialog-scroll" data-testid="footer-scroll">
+        <label class="covered-target"><span data-testid="footer-covered-target">申请理由</span></label>
+        <div class="after-target"></div>
+      </div>
+      <div class="dialog-footer" data-testid="dialog-footer">关闭 保存</div>
+    </div>
+  </section>
+
+  <section id="permanent-scenario" hidden>
+    <div class="center-stage">
+      <button type="button" data-testid="permanent-target">permanent-target</button>
+    </div>
+    <div class="blocking-overlay" data-testid="permanent-overlay">permanent-overlay</div>
+  </section>
+
+  <section id="transient-scenario" hidden>
+    <div class="center-stage">
+      <button type="button" data-testid="transient-target">transient-target</button>
+    </div>
+    <div class="blocking-overlay" data-testid="transient-overlay">transient-overlay</div>
+  </section>
+
+  <div class="state" data-testid="obscured-state">idle</div>
+  <script>
+    const state = document.querySelector('[data-testid="obscured-state"]');
+    let overlayTimer = 0;
+
+    document.querySelector('[data-testid="footer-covered-target"]').addEventListener('click', () => {
+      state.textContent = 'footer-clicked';
+    });
+    document.querySelector('[data-testid="permanent-target"]').addEventListener('click', () => {
+      state.textContent = 'permanent-clicked';
+    });
+    document.querySelector('[data-testid="transient-target"]').addEventListener('click', () => {
+      state.textContent = 'transient-clicked';
+    });
+
+    window.activateObscuredScenario = (name) => {
+      clearTimeout(overlayTimer);
+      state.textContent = 'idle';
+      document.querySelector('#footer-scenario').hidden = name !== 'footer';
+      document.querySelector('#permanent-scenario').hidden = name !== 'permanent';
+      document.querySelector('#transient-scenario').hidden = name !== 'transient';
+      if (name === 'transient') {
+        const overlay = document.querySelector('[data-testid="transient-overlay"]');
+        overlay.hidden = false;
+        overlayTimer = setTimeout(() => { overlay.hidden = true; }, 700);
+      }
+    };
+  </script>
+</body>
+</html>
