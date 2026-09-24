@@ -272,17 +272,6 @@ function failureWithAttempts(failure: SelectorQueryFailure, attempts: SelectorQu
     };
 }
 
-function toFrameDocument(node: Element): Document | null {
-    if (!isFrameElement(node)) {
-        return null;
-    }
-    try {
-        return node.contentDocument;
-    } catch {
-        return null;
-    }
-}
-
 export function rectFromElement(node: Element): QueryRect | null {
     const box = visualBoxForElement(node, {includeDescendants: true});
     if (!box) {
@@ -950,7 +939,6 @@ export class SelectorQueryRuntime {
         const merged = this.emptyResolution();
         for (const frameElement of frameElements) {
             const frameSummary = summarizeFrameElement(frameElement);
-            const frameDoc = toFrameDocument(frameElement);
             const remote = await this.bridge.queryChildFrame(frameElement, plan, {
                 mode,
                 resultMode,
@@ -976,18 +964,9 @@ export class SelectorQueryRuntime {
                 continue;
             }
 
-            if (frameDoc) {
-                const local = await this.resolvePlan([frameDoc], plan.layers || [], 0, mode, resultMode, limit, actionabilityOptions, allowImplicitFrameFallback, membershipKey);
-                this.mergeResolution(merged, local);
-                if (!merged.implicitFrameElementSummary) {
-                    merged.implicitFrameElementSummary = frameSummary;
-                }
-                if (limit > 0 && merged.ids.length >= limit) {
-                    break;
-                }
-                continue;
-            }
-
+            // A child node must retain its own runtime and execution context.
+            // Let the caller wait for the child bridge instead of treating a
+            // same-origin child document as part of the parent runtime.
             if (remote.failure && !merged.failure) {
                 merged.failure = withFailureFrameSummary(remote.failure, frameSummary);
             } else if (remote.session?.failure && !merged.failure) {

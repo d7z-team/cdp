@@ -74,29 +74,50 @@ func TestSelectorDoubleClick(t *testing.T) {
 	}
 }
 
-func TestSelectorMouseRightClick(t *testing.T) {
-	if !browserEnabled {
-		t.Skip("set CDP_E2E_BROWSER=1")
-	}
-	page := openFixture(t, "/events")
-	btn := page.ByTestID("rightclick-area")
-	mustOK(btn.RightClick(context.Background()))
-	if attribute(btn, "data-rightclicked") != "true" {
-		t.Fatal("right click event not triggered")
-	}
-}
-
 func TestSelectorRightClick(t *testing.T) {
 	if !browserEnabled {
 		t.Skip("set CDP_E2E_BROWSER=1")
 	}
 	page := openFixture(t, "/events")
 	btn := page.ByTestID("rightclick-area")
-	mustOK(btn.RightClick(context.Background()))
-	mustOK(btn.RightClick(context.Background()))
-
+	mustOK(btn.RightClick(t.Context()))
 	if attribute(btn, "data-rightclicked") != "true" {
-		t.Fatal("RightClick alias should work same as MouseRightClick")
+		t.Fatal("right click event not triggered")
+	}
+}
+
+func TestCoordinateMouseClicks(t *testing.T) {
+	if !browserEnabled {
+		t.Skip("set CDP_E2E_BROWSER=1")
+	}
+	for _, mode := range []cdp.ActionMode{cdp.ActionFast, cdp.ActionStrict} {
+		t.Run(string(mode), func(t *testing.T) {
+			page := configuredPage(t, openFixture(t, "/events"), cdp.ConnectOptions{ActionMode: mode})
+			for _, tc := range []struct {
+				name, testID, attribute, want string
+				click                         func(context.Context, float64, float64) error
+			}{
+				{"left", "key-checkbox", "", "true", page.MouseClick},
+				{"double", "dblclick-btn", "data-count", "1", page.MouseDoubleClick},
+				{"right", "rightclick-area", "data-rightclicked", "true", page.MouseRightClick},
+			} {
+				t.Run(tc.name, func(t *testing.T) {
+					target := page.ByTestID(tc.testID)
+					var point struct{ X, Y float64 }
+					mustOK(target.Eval(t.Context(), `const rect = this.getBoundingClientRect(); return {x: rect.left + rect.width / 2, y: rect.top + rect.height / 2}`, &point))
+					mustOK(tc.click(t.Context(), point.X, point.Y))
+					got := ""
+					if tc.attribute == "" {
+						got = evalValue(target, `return this.checked`)
+					} else {
+						got = attribute(target, tc.attribute)
+					}
+					if got != tc.want {
+						t.Fatalf("%s result = %q, want %q", tc.name, got, tc.want)
+					}
+				})
+			}
+		})
 	}
 }
 

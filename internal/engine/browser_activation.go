@@ -131,7 +131,7 @@ func (r *BrowserManager) refreshPageTargetInfoFromList() {
 	defer cancel()
 	pages, err := r.ListPages(ctx)
 	if err != nil {
-		slog.Debug("refresh page target info failed", "error", err)
+		r.log(slog.LevelDebug, "refresh page target info failed", "error", err)
 		return
 	}
 	activeID := r.currentActivePageID()

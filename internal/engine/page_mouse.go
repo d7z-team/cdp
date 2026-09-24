@@ -568,21 +568,18 @@ func (p *Page) MouseClick(x, y float64) error {
 
 func (p *Page) MouseClickContext(ctx context.Context, x, y float64) error {
 	return p.runForegroundInteractionContext(ctx, func() error {
-		return p.mouseClick(ctx,
-			x, y)
+		return p.mouseClick(ctx, x, y, "left")
 	})
 }
 
-func (p *Page) mouseClick(ctx context.Context,
-
-	x, y float64) error {
-	p.showMouseAction(ctx,
-		mouseVisualAction{Kind: "click", X: x, Y: y})
-	p.showActionTarget(ctx,
-		p.pointTargetPreviewBoxes(ctx,
-			x, y))
-	if err := p.mouseMove(ctx,
-		x, y); err != nil {
+func (p *Page) mouseClick(ctx context.Context, x, y float64, button string) error {
+	kind := "click"
+	if button == "right" {
+		kind = "right-click"
+	}
+	p.showMouseAction(ctx, mouseVisualAction{Kind: kind, X: x, Y: y})
+	p.showActionTarget(ctx, p.pointTargetPreviewBoxes(ctx, x, y))
+	if err := p.mouseMove(ctx, x, y); err != nil {
 		return err
 	}
 	if !p.fastActionMode() {
@@ -590,9 +587,7 @@ func (p *Page) mouseClick(ctx context.Context,
 			return err
 		}
 	}
-
-	return p.dispatchMouseClick(ctx,
-		x, y, "left", 50*time.Millisecond)
+	return p.dispatchMouseClick(ctx, x, y, button, 50*time.Millisecond)
 }
 
 // MouseDoubleClick 执行双击序列
@@ -602,26 +597,13 @@ func (p *Page) MouseDoubleClick(x, y float64) error {
 
 func (p *Page) MouseDoubleClickContext(ctx context.Context, x, y float64) error {
 	return p.runForegroundInteractionContext(ctx, func() error {
-		return p.mouseDoubleClick(ctx,
-			x, y)
+		p.showMouseAction(ctx, mouseVisualAction{Kind: "double-click", X: x, Y: y})
+		p.showActionTarget(ctx, p.pointTargetPreviewBoxes(ctx, x, y))
+		if err := p.mouseMove(ctx, x, y); err != nil {
+			return err
+		}
+		return p.dispatchMouseDoubleClick(ctx, x, y)
 	})
-}
-
-func (p *Page) mouseDoubleClick(ctx context.Context,
-
-	x, y float64) error {
-	p.showMouseAction(ctx,
-		mouseVisualAction{Kind: "double-click", X: x, Y: y})
-	p.showActionTarget(ctx,
-		p.pointTargetPreviewBoxes(ctx,
-			x, y))
-	if err := p.mouseMove(ctx,
-		x, y); err != nil {
-		return err
-	}
-
-	return p.dispatchMouseDoubleClick(ctx,
-		x, y)
 }
 
 // MouseDrag 执行拖拽操作
@@ -722,31 +704,8 @@ func (p *Page) MouseRightClick(x, y float64) error {
 
 func (p *Page) MouseRightClickContext(ctx context.Context, x, y float64) error {
 	return p.runForegroundInteractionContext(ctx, func() error {
-		return p.mouseRightClick(ctx,
-			x, y)
+		return p.mouseClick(ctx, x, y, "right")
 	})
-}
-
-func (p *Page) mouseRightClick(ctx context.Context,
-
-	x, y float64) error {
-	p.showMouseAction(ctx,
-		mouseVisualAction{Kind: "right-click", X: x, Y: y})
-	p.showActionTarget(ctx,
-		p.pointTargetPreviewBoxes(ctx,
-			x, y))
-	if err := p.mouseMove(ctx,
-		x, y); err != nil {
-		return err
-	}
-	if !p.fastActionMode() {
-		if err := waitInputDelay(ctx, 50*time.Millisecond); err != nil {
-			return err
-		}
-	}
-
-	return p.dispatchMouseClick(ctx,
-		x, y, "right", 50*time.Millisecond)
 }
 
 func (p *Page) inputDispatchMouseEvent(ctx context.Context,

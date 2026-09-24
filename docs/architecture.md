@@ -33,13 +33,13 @@ flowchart TD
 
 公开包签名使用公共类型。MCP 通过公开 `cdp` API 操作浏览器；根库与 `snapshot` 的包依赖独立于 MCP SDK。内部工具按实际共享职责组织。
 
-## 生命周期与调用链
+## 运行与调用边界
 
-根包负责资源所有权、超时和公开错误契约，engine 负责 CDP 协议与运行时状态。MCP 复用公开库能力，维护自己的工具和快照引用状态。资源释放约定见 [Go API 指南](library-api.md)。
+根包负责资源所有权、超时和公开错误契约；launcher 管理浏览器进程与 profile；engine 管理 CDP 连接、target 和文档运行时。MCP 通过公开库能力维护工具状态及快照引用。资源释放约定见 [Go API 指南](library-api.md)。
 
-`BrowserManager` 集中管理 binding、初始化脚本与 target 生命周期，通过 frame tree 和导航事件建立运行时，不依赖 Runtime 诊断事件。只有完成初始化的 Page 才对外发布；文档与执行上下文的代际用于隔离导航前后的状态。
+`BrowserManager` 统一注册 binding 和初始化脚本，只有完成初始化的 Page 才对外发布。导航和 target 事件驱动运行时更新，文档代际隔离导航前后的状态。iframe 初始化和 Worker 的恢复、附加会话释放由同一 target 管理流程协调。
 
-Go 构造定位计划，页面侧 TypeScript 统一解析并执行。查询、快照与命中检测共享 author Shadow DOM 的访问能力。Locator 表达可重复查询，Element 表达精确节点；浏览器侧失败通过结构化错误链返回。
+Go 构造定位计划，页面侧 TypeScript 统一解析并执行。查询、快照和命中检测共享 Shadow DOM 访问能力，失败通过结构化错误链返回。具体定位行为见 [选择器指南](selectors.md)。
 
 ## 页面运行时
 
@@ -50,11 +50,11 @@ Go 构造定位计划，页面侧 TypeScript 统一解析并执行。查询、�
 | Isolated core | 选择器、可操作性、快照、截图与绘制 |
 | Overlay | CDP Overlay 协议，不对应 JavaScript execution context |
 
-Isolated core 通过 `CdpFFI` 统一提供功能并管理内部模块生命周期。Go 根据操作选择执行上下文；main world 控制器使用随机名称的全局词法绑定。
+每个文档的 isolated core 通过单个 `CdpFFI` 提供功能并管理内部模块生命周期。Go 根据操作选择执行上下文；main world 控制器使用随机名称的全局词法绑定。具体修改约束见 [AGENTS.md](../AGENTS.md)。
 
 跨 iframe 的查询、坐标、截图和可操作性诊断共享认证加密的 frame bridge。密钥只注入 isolated world，消息交付绑定当前接收文档；frame 身份来自 CDP，避免信任网页自报的身份。
 
-页面脚本构建为 `core`、`main_runtime` 两个入口，随 Go 模块嵌入。开发者修改 TypeScript 或 binding 源时同步生成产物，Go 使用方无需安装前端构建工具。
+页面脚本构建为 `core`、`main_runtime` 两个入口，随 Go 模块嵌入。生成与同步流程见 [开发指南](development.md)。
 
 ## 信任边界
 

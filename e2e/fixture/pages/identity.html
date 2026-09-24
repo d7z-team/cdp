@@ -1,0 +1,42 @@
+<!doctype html><meta charset="utf-8"><title>Browser identity</title>
+<script src="/assets/identity.js"></script>
+<script>
+async function identityProbe() {
+  const results={main:await identity()};
+  for(const kind of ['worker','shared','service']) {
+    let port, worker, registration;
+    if(kind==='worker') {worker=new Worker('/assets/identity-worker.js');port=worker;}
+    if(kind==='shared') {worker=new SharedWorker('/assets/identity-shared.js');port=worker.port;port.start();}
+    if(kind==='service') {
+      registration=await navigator.serviceWorker.register('/assets/identity-service.js');
+      worker=registration.installing||registration.waiting||registration.active;
+      if(worker.state!=='activated')await new Promise(resolve=>worker.addEventListener('statechange',()=>{if(worker.state==='activated')resolve()}));
+      const channel=new MessageChannel();port=channel.port1;
+      worker.postMessage('identity',[channel.port2]);
+    }
+    try {
+      results[kind]=await new Promise((resolve,reject)=>{
+        const timer=setTimeout(()=>reject(Error(kind+' timeout')),5000);
+        port.onmessage=e=>{clearTimeout(timer);resolve(e.data)};
+        if(kind!=='service')port.postMessage('identity');
+      });
+    } finally {
+      if(kind==='worker')worker.terminate();else port.close();
+      if(registration)await registration.unregister();
+    }
+  }
+  for(const kind of ['same','cross']) {
+    const url=new URL('/identity-frame',location.href);
+    if(kind==='cross')url.hostname=location.hostname==='localhost'?'127.0.0.1':'localhost';
+    const frame=document.createElement('iframe');
+    try {
+      results[kind]=await new Promise((resolve,reject)=>{
+        const listener=e=>{if(e.source===frame.contentWindow&&e.data?.kind==='identity'){clearTimeout(timer);removeEventListener('message',listener);resolve(e.data.value)}};
+        const timer=setTimeout(()=>{removeEventListener('message',listener);reject(Error(kind+' timeout'))},5000);
+        addEventListener('message',listener);frame.src=url.href;document.body.append(frame);
+      });
+    } finally {frame.remove()}
+  }
+  return results;
+}
+</script>

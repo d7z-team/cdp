@@ -7,10 +7,6 @@ import (
 )
 
 func jsStringLiteral(value string) string {
-	return jsLiteral(value)
-}
-
-func jsLiteral(value any) string {
 	var buf bytes.Buffer
 	enc := json.NewEncoder(&buf)
 	enc.SetEscapeHTML(false)

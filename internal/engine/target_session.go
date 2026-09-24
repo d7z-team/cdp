@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"sort"
 	"strings"
+	"time"
 
 	"gopkg.d7z.net/cdp/internal/binding"
 	"gopkg.d7z.net/cdp/internal/syncutil"
@@ -132,6 +133,22 @@ func (r *BrowserManager) resolveTargetSessionPageID(session TargetSession) strin
 	return r.getLastActivePageID(false)
 }
 
+// autoAttachFrameChildren pauses frames until their registrations are installed.
+// Include workers as well: Chromium can pause excluded workers without emitting
+// an attachedToTarget event, leaving no session through which to resume them.
+func (r *BrowserManager) autoAttachFrameChildren(ctx context.Context, conn *CdpConn, sessionID string) error {
+	return conn.SendSessionPacket(ctx, sessionID, "Target.setAutoAttach", map[string]any{
+		"autoAttach": true, "waitForDebuggerOnStart": true, "flatten": true,
+		"filter": []map[string]any{
+			{"type": "iframe", "exclude": false},
+			{"type": "worker", "exclude": false},
+			{"type": "shared_worker", "exclude": false},
+			{"type": "service_worker", "exclude": false},
+			{"exclude": true},
+		},
+	})
+}
+
 func (r *BrowserManager) initTargetSession(ctx context.Context, session *TargetSession) error {
 	if r == nil {
 		return ErrBrowserClosed
@@ -149,18 +166,13 @@ func (r *BrowserManager) initTargetSession(ctx context.Context, session *TargetS
 		errs = append(errs, fmt.Errorf("runtime enable: %w", err))
 	}
 	if err := conn.SendSessionPacket(ctx, sessionID, "Page.enable", nil); err != nil {
-		slog.Debug("Page.enable target session failed", "session_id", sessionID, "target_id", session.TargetID, "target_type", session.Type, "error", err)
+		r.log(slog.LevelDebug, "Page.enable target session failed", "session_id", sessionID, "target_id", session.TargetID, "target_type", session.Type, "error", err)
 	}
 	if err := conn.SendSessionPacket(ctx, sessionID, "Page.setLifecycleEventsEnabled", map[string]any{"enabled": true}); err != nil {
-		slog.Debug("Page.setLifecycleEventsEnabled target session failed", "session_id", sessionID, "target_id", session.TargetID, "target_type", session.Type, "error", err)
+		r.log(slog.LevelDebug, "Page.setLifecycleEventsEnabled target session failed", "session_id", sessionID, "target_id", session.TargetID, "target_type", session.Type, "error", err)
 	}
-	if err := conn.SendSessionPacket(ctx, sessionID, "Target.setAutoAttach", map[string]any{
-		"autoAttach":             true,
-		"waitForDebuggerOnStart": true,
-		"filter":                 []map[string]any{{"type": "iframe", "exclude": false}, {"exclude": true}},
-		"flatten":                true,
-	}); err != nil {
-		slog.Debug("recursive Target.setAutoAttach target session failed", "session_id", sessionID, "target_id", session.TargetID, "target_type", session.Type, "error", err)
+	if err := r.autoAttachFrameChildren(ctx, conn, sessionID); err != nil {
+		r.log(slog.LevelDebug, "recursive Target.setAutoAttach target session failed", "session_id", sessionID, "target_id", session.TargetID, "target_type", session.Type, "error", err)
 	}
 	if err := r.registerBindingsInTargetSession(ctx, sessionID); err != nil {
 		errs = append(errs, fmt.Errorf("register bindings: %w", err))
@@ -171,7 +183,7 @@ func (r *BrowserManager) initTargetSession(ctx context.Context, session *TargetS
 		}
 	}
 	if err := conn.SendSessionPacket(ctx, sessionID, "Runtime.runIfWaitingForDebugger", nil); err != nil {
-		slog.Debug("Runtime.runIfWaitingForDebugger target session failed", "session_id", sessionID, "target_id", session.TargetID, "target_type", session.Type, "error", err)
+		r.log(slog.LevelDebug, "Runtime.runIfWaitingForDebugger target session failed", "session_id", sessionID, "target_id", session.TargetID, "target_type", session.Type, "error", err)
 	}
 	if page, ok := r.managedPage(session.PageID); ok {
 		if err := r.reconcileDocumentRuntime(ctx, page, sessionID); err != nil {
@@ -281,50 +293,34 @@ func (r *BrowserManager) handleAttachedTargetEvent(event CDPResponse, parent *Ta
 	sessionID, _ := event.Params["sessionId"].(string)
 
 	if typ == "page" {
+		info := TargetInfo{
+			OpenerFrameID: openerFrameID, OpenerID: openerID,
+			ParentID: parentID, ParentFrameID: parentFrameID,
+			TargetID: id, Title: title, Type: typ, URL: targetURL,
+		}
 		// Browser-level auto-attach is not recursive. Keep this session as a
 		// routing carrier and attach its OOPIF children before they execute.
 		// The root Page still owns its separate runtime connection.
 		if sessionID != "" {
 			r.rememberTargetSession(TargetSession{TargetID: id, SessionID: sessionID, Type: typ, PageID: id, FrameID: id, URL: targetURL})
-			syncutil.Go(func() {
+			syncutil.Go(r.Logger(), func() {
 				conn, err := r.activeConn()
 				if err != nil {
 					return
 				}
-				if err := conn.SendSessionPacket(r.ctx, sessionID, "Target.setAutoAttach", map[string]any{
-					"autoAttach": true, "waitForDebuggerOnStart": true, "flatten": true,
-					"filter": []map[string]any{{"type": "iframe", "exclude": false}, {"exclude": true}},
-				}); err != nil {
-					slog.Warn("attach page iframe targets failed", "page_id", id, "error", err)
+				if err := r.autoAttachFrameChildren(r.ctx, conn, sessionID); err != nil {
+					r.log(slog.LevelWarn, "attach page iframe targets failed", "page_id", id, "error", err)
 				}
 			})
 		}
 		if IsInternalPageURL(targetURL) {
-			r.updatePageTargetInfo(TargetInfo{
-				OpenerFrameID: openerFrameID,
-				OpenerID:      openerID,
-				ParentID:      parentID,
-				ParentFrameID: parentFrameID,
-				TargetID:      id,
-				Title:         title,
-				Type:          typ,
-				URL:           targetURL,
-			})
+			r.updatePageTargetInfo(info)
 			if r.currentActivePageID() == id {
 				r.clearActivePage(id, LifecycleSourceTarget, "attached_internal")
 			}
 			return
 		}
-		r.markPageDiscovered(TargetInfo{
-			OpenerFrameID: openerFrameID,
-			OpenerID:      openerID,
-			ParentID:      parentID,
-			ParentFrameID: parentFrameID,
-			TargetID:      id,
-			Title:         title,
-			Type:          typ,
-			URL:           targetURL,
-		}, nil)
+		r.markPageDiscovered(info, nil)
 		r.requestPageBind(id, false)
 		if IsPlaceholderPageURL(targetURL) && r.currentActivePageID() == id {
 			r.clearActivePage(id, LifecycleSourceTarget, "attached_placeholder")
@@ -332,6 +328,31 @@ func (r *BrowserManager) handleAttachedTargetEvent(event CDPResponse, parent *Ta
 		if IsExecutablePageURL(targetURL) && r.getLastActivePageID(false) == "" {
 			r.setActivePage(id, LifecycleSourceTarget, "attached_executable")
 		}
+		return
+	}
+
+	if sessionID != "" && (typ == "worker" || typ == "shared_worker" || typ == "service_worker") {
+		syncutil.Go(r.Logger(), func() {
+			conn, err := r.activeConn()
+			if err != nil {
+				return
+			}
+			if waiting, _ := event.Params["waitingForDebugger"].(bool); waiting {
+				ctx, cancel := context.WithTimeout(r.ctx, 5*time.Second)
+				err := conn.SendSessionPacket(ctx, sessionID, "Runtime.runIfWaitingForDebugger", nil)
+				cancel()
+				if err != nil && !isSupersededDocumentError(err) {
+					r.log(slog.LevelWarn, "resume worker target failed", "target_type", typ, "error", err)
+				}
+			}
+			// Detach through the parent that owns this session, even if resume failed.
+			// Workers may finish or be terminated between the two commands.
+			ctx, cancel := context.WithTimeout(r.ctx, 5*time.Second)
+			defer cancel()
+			if err := conn.SendSessionPacket(ctx, event.SessionID, "Target.detachFromTarget", map[string]any{"sessionId": sessionID}); err != nil && !isSupersededDocumentError(err) {
+				r.log(slog.LevelWarn, "detach worker target failed", "target_type", typ, "error", err)
+			}
+		})
 		return
 	}
 
@@ -358,9 +379,9 @@ func (r *BrowserManager) handleAttachedTargetEvent(event CDPResponse, parent *Ta
 	if _, err := r.activeConn(); err != nil {
 		return
 	}
-	syncutil.Go(func() {
-		if err := r.initTargetSession(context.Background(), session); err != nil {
-			slog.Warn("init iframe target session failed", "session_id", session.SessionID, "target_id", session.TargetID, "url", session.URL, "error", err)
+	syncutil.Go(r.Logger(), func() {
+		if err := r.initTargetSession(context.Background(), session); err != nil && !errors.Is(err, ErrBrowserClosed) && !errors.Is(err, context.Canceled) {
+			r.log(slog.LevelWarn, "init iframe target session failed", "session_id", session.SessionID, "target_id", session.TargetID, "error", err)
 		}
 	})
 }
@@ -387,10 +408,10 @@ func (r *BrowserManager) handleTargetSessionEvent(event CDPResponse) {
 				page.bumpTargetEpoch(session.SessionID)
 			})
 		}
-		syncutil.Go(func() {
+		syncutil.Go(r.Logger(), func() {
 			if page, ok := r.managedPage(session.PageID); ok {
 				if err := r.reconcileDocumentRuntime(r.ctx, page, session.SessionID); err != nil && !isSupersededDocumentError(err) {
-					slog.Debug("reconcile iframe runtime", "error", err)
+					r.log(slog.LevelDebug, "reconcile iframe runtime", "error", err)
 				}
 			}
 		})
@@ -411,12 +432,12 @@ func (r *BrowserManager) handleTargetSessionEvent(event CDPResponse) {
 	case "Runtime.bindingCalled":
 		var data binding.BindingCalledEvent
 		if err := event.ParamsUnmarshal(&data); err != nil {
-			slog.Debug("parse target session binding event failed", "session_id", session.SessionID, "target_id", session.TargetID, "error", err)
+			r.log(slog.LevelDebug, "parse target session binding event failed", "session_id", session.SessionID, "target_id", session.TargetID, "error", err)
 			return
 		}
 		page, ok := r.managedPage(session.PageID)
 		if !ok {
-			slog.Debug("target session binding page not found", "session_id", session.SessionID, "target_id", session.TargetID, "page_id", session.PageID, "binding", data.Name)
+			r.log(slog.LevelDebug, "target session binding page not found", "session_id", session.SessionID, "target_id", session.TargetID, "page_id", session.PageID, "binding", data.Name)
 			return
 		}
 		handle := func() {
@@ -430,13 +451,13 @@ func (r *BrowserManager) handleTargetSessionEvent(event CDPResponse) {
 				TargetID:   session.TargetID,
 				TargetType: session.Type,
 			}, &data); err != nil {
-				slog.Debug("target session binding handler failed", "session_id", session.SessionID, "target_id", session.TargetID, "binding", data.Name, "error", err)
+				r.log(slog.LevelDebug, "target session binding handler failed", "session_id", session.SessionID, "target_id", session.TargetID, "binding", data.Name, "error", err)
 			}
 		}
 		if bindingCallKind(data.Payload) == "notify" {
 			page.enqueueBindingNotification(handle)
 		} else {
-			syncutil.Go(handle)
+			syncutil.Go(r.Logger(), handle)
 		}
 	}
 }

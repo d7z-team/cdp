@@ -1,4 +1,4 @@
-.PHONY: fmt tidy vet lint generate check-ts build-assets inject test test-race test-e2e test-e2e-browser test-e2e-browser-headful
+.PHONY: fmt tidy vet lint generate check-ts test-ts build-assets inject test test-race test-e2e test-e2e-browser test-e2e-browser-headful
 
 fmt:
 	gofmt -w $$(rg --files -g '*.go')
@@ -16,6 +16,9 @@ generate:
 
 check-ts:
 	npm exec tsc -- --noEmit
+
+test-ts:
+	npm test
 
 build-assets:
 	npm run build

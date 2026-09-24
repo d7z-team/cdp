@@ -19,21 +19,25 @@ go run ./cmd/cdp-mcp
 | `-no-headless` | 显示浏览器窗口 |
 | `-browser-path` | 指定浏览器；默认自动查找 |
 | `-user-data-dir` | 指定持久化 profile 目录 |
-| `-ua` | 设置所有页面的 User-Agent；默认留空，使用浏览器原生值 |
+| `-window-size` | 窗口尺寸（CSS 像素）；默认 `1440,960` |
+| `-screen-size` | 无头屏幕尺寸（CSS 像素）；默认至少 `1920,1080`，容纳配置的窗口 |
+| `-screen-scale` | 无头屏幕缩放；默认 `1` |
 | `-host`、`-port` | 设置监听地址；默认 `127.0.0.1:3000` |
 | `-diagnostics=runtime` | 开启 console 与未捕获异常采集 |
 
 默认 profile 位于操作系统用户配置目录下的 `browser-mcp`，退出后保留。完整参数以 `go run ./cmd/cdp-mcp -help` 为准。
 
-### User-Agent
+### 浏览器环境
 
-默认无头模式保留浏览器原生 UA，其中可能包含 `HeadlessChrome`，项目不会自动改写这个标记。需要指定 UA 时，使用 `-ua`，例如：
+浏览器保持原生 UA 与 Client Hints，无头 UA 可能包含 `HeadlessChrome`。
+
+无头屏幕与浏览器窗口分别配置。例如，使用 1920×1080 的屏幕、缩放 2 和 1440×960 的窗口：
 
 ```sh
-go run ./cmd/cdp-mcp -ua 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36'
+go run ./cmd/cdp-mcp -screen-size 1920,1080 -screen-scale 2 -window-size 1440,960
 ```
 
-示例对应 Linux Chrome 153，实际值应与使用的浏览器平台和版本匹配。该参数只设置 UA 字符串，不提供整套浏览器指纹模拟。嵌入应用时，对应设置 `cdp.LaunchOptions.UserAgent`。
+显式屏幕必须容纳窗口。`-no-headless` 使用实际显示环境，不接受虚拟屏幕参数。无头启动需要 Chrome 142+。
 
 ## 嵌入应用
 
@@ -45,7 +49,7 @@ MCP Server 借用 Browser，`Server.Close()` 只释放 MCP 资源。调用方分
 
 诊断默认关闭，`browser_console` 此时返回 `diagnostics_disabled`。CLI 使用 `-diagnostics=runtime`；嵌入时在创建 Browser 的选项中设置 `Diagnostics: cdp.DiagnosticsRuntime`。
 
-console 只提供订阅建立以来的有限事件，不代表完整页面历史。响应中的 `collection_started_at` 标明采集起点，`history_complete` 为 `false`。
+console 返回自采集开始以来的有限事件，采集范围见工具响应；不能作为完整页面历史。
 
 ## 访问控制
 

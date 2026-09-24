@@ -1,5 +1,5 @@
-// Package browser starts and controls a Chrome process with a CDP endpoint.
-package browser
+// Package launcher starts and controls a Chrome process with a CDP endpoint.
+package launcher
 
 import (
 	"bufio"

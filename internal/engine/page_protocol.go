@@ -71,10 +71,6 @@ func (p *Page) PageHandleJavaScriptDialog(accept bool, promptText string) error 
 	return BrowserErrorFromCDP("Page.handleJavaScriptDialog", topPageExecutionTarget(), err)
 }
 
-func (p *Page) pageBringToFront(ctx context.Context) error {
-	return BrowserErrorFromCDP("Page.bringToFront", ExecutionTarget{TargetID: p.ID}, p.CdpConn.SendPacketContext(ctx, "Page.bringToFront", nil))
-}
-
 func (p *Page) activatePageTarget(ctx context.Context) error {
 	if p == nil || p.manager == nil {
 		return ErrBrowserClosed
@@ -85,15 +81,11 @@ func (p *Page) activatePageTarget(ctx context.Context) error {
 	if err := p.manager.activateTarget(ctx, p.ID); err != nil {
 		return err
 	}
-	if err := p.pageBringToFront(ctx); err != nil {
+	if err := BrowserErrorFromCDP("Page.bringToFront", ExecutionTarget{TargetID: p.ID}, p.CdpConn.SendPacketContext(ctx, "Page.bringToFront", nil)); err != nil {
 		return err
 	}
 	p.manager.setActivePage(p.ID, LifecycleSourceManager, "page_activate")
 	return nil
-}
-
-func (p *Page) runForegroundInteraction(action func() error) error {
-	return p.runForegroundInteractionContext(p.ctx, action)
 }
 
 func (p *Page) runForegroundInteractionContext(ctx context.Context, action func() error) error {
@@ -119,5 +111,5 @@ func (p *Page) runForegroundInteractionContext(ctx context.Context, action func(
 }
 
 func (p *Page) Activate() error {
-	return p.runForegroundInteraction(nil)
+	return p.runForegroundInteractionContext(p.ctx, nil)
 }

@@ -254,13 +254,6 @@ export function supportsNativeDisabled(element: Element | null): boolean {
         element instanceof HTMLFieldSetElement;
 }
 
-export function supportsDisabledState(element: Element | null): boolean {
-    if (!element) return false;
-    return supportsNativeDisabled(element) ||
-        element.getAttribute('aria-disabled') === 'true' ||
-        hasInheritedAriaDisabled(element);
-}
-
 export function isEnabled(element: Element): boolean {
     if (!element) return false;
     if (element.getAttribute('aria-disabled') === 'true' || hasInheritedAriaDisabled(element)) {

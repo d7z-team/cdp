@@ -15,6 +15,21 @@
 
 下载和打印 watcher 应在触发动作前注册；取消一次等待不关闭 watcher。MCP 的嵌入与关闭约定见 [MCP 指南](mcp.md)。
 
+## 浏览器环境
+
+`LaunchOptions.WindowSize` 指定窗口外部尺寸，`LaunchOptions.Screen` 配置无头虚拟屏幕。两者宽高均使用 CSS 像素，`Screen.ScaleFactor` 指定设备像素比。无头屏幕默认至少为 1920×1080、缩放 1，并扩大到足以容纳显式窗口；显式屏幕小于窗口时返回配置错误。
+
+```go
+browser, err := cdp.Launch(ctx, cdp.LaunchOptions{
+    WindowSize: cdp.WindowSize{Width: 1440, Height: 960},
+    Screen: cdp.ScreenOptions{Width: 1920, Height: 1080, ScaleFactor: 2},
+})
+```
+
+无头启动需要 Chrome 142+ 的原生虚拟屏幕支持。启动时校验屏幕配置，失败则返回错误。有头模式使用实际显示环境，`Screen` 保持零值；`Connect` 保留已有浏览器的显示配置。窗口与屏幕统一通过对应字段设置。
+
+浏览器身份保持原生 UA 与 Client Hints；无头 UA 可能包含 `HeadlessChrome`。页面、iframe、Worker 的属性与请求头遵循浏览器自身行为。
+
 ## Context 与超时
 
 I/O 方法以非 nil `context.Context` 为首参并返回错误。构造时的 context 只约束连接和初始化；成功后通过显式关闭管理资源生命周期。
@@ -34,13 +49,20 @@ I/O 方法以非 nil `context.Context` 为首参并返回错误。构造时的 c
 - `Fetch` 在浏览器环境执行，遵循页面 cookie 与 CORS 规则，取消操作会中止请求。
 - 高级协议操作使用 `Session.Call/Subscribe`；需要明确执行环境时使用 `ExecutionContext`。初始化 binding、脚本和 lifecycle handler 通过构造选项的 `Initialize` 回调注册。
 
-## 诊断与初始化时机
-
-`LaunchOptions.Diagnostics` 和 `ConnectOptions.Diagnostics` 默认为 `DiagnosticsOff`。执行、定位、binding、网络与对话框能力在两种模式中一致；需要 console 与未捕获异常事件时，创建 `DiagnosticsRuntime` 实例。配置在连接生命周期内固定，可通过 `Browser.Diagnostics()` 读取。
-
-关闭诊断时，订阅 Runtime 诊断事件返回可由 `errors.Is` 判断的 `ErrDiagnosticsDisabled`。`Runtime.bindingCalled` 仍用于正常交互。`Session.Call` 是显式底层入口，调用方自行启用协议域或安装脚本会改变浏览器的观察行为；实例配置不代表其他 CDP 客户端或 DevTools 的状态。
+## 初始化与可观察性
 
 `Navigate`、`Reload` 和历史导航返回后，当前文档的 binding 可用；网页最早脚本可能先于 binding 注册执行。依赖 binding 的自定义启动脚本需要等待其可用。用户 Eval 或输入一旦派发，不因上下文失效自动重放。
+
+浏览器诊断与 Go 日志分别配置：
+
+| 配置 | 行为 |
+| --- | --- |
+| `Diagnostics` | 默认 `DiagnosticsOff`；需要 console 与未捕获异常事件时，创建 `DiagnosticsRuntime` 实例。配置在连接生命周期内固定 |
+| `Logger` | 接受 `*slog.Logger`，由 handler 决定级别与去向；默认不输出普通运行日志 |
+
+关闭诊断时，订阅相应事件返回 `ErrDiagnosticsDisabled`，正常浏览器操作不受影响。底层 `Session.Call` 或其他 CDP 客户端仍可改变浏览器协议状态。
+
+后台任务恢复 panic 时会报告错误与堆栈；没有实例 Logger 时使用 `slog.Default()`。MCP CLI 默认启用日志。
 
 ## 错误处理
 

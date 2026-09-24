@@ -2,6 +2,7 @@ package syncutil
 
 import (
 	"context"
+	"log/slog"
 	"sync"
 	"sync/atomic"
 )
@@ -11,6 +12,8 @@ type Subscriber[T any] func(msg T)
 
 // PubSub delivers values to dynamic and optional static subscribers.
 type PubSub[T any] struct {
+	// Logger handles background panic diagnostics; configure it before subscribing.
+	Logger      *slog.Logger
 	rwmux       sync.RWMutex
 	subscribers map[uint64]Subscriber[T]
 	changed     func(before, after int)
@@ -45,7 +48,7 @@ func (ps *PubSub[T]) WatchWhere(ctx context.Context, predicate func(T) bool, res
 	var closed bool
 
 	ps.rwmux.Lock()
-	closer := ps.sub(func(msg T) {
+	closer := ps.subscribeLocked(func(msg T) {
 		if predicate != nil && !predicate(msg) {
 			return
 		}
@@ -78,7 +81,7 @@ func (ps *PubSub[T]) WatchWhere(ctx context.Context, predicate func(T) bool, res
 	})
 	ps.rwmux.Unlock()
 
-	Go(func() {
+	Go(ps.Logger, func() {
 		<-ctx.Done()
 		closer()
 		mu.Lock()
@@ -107,7 +110,7 @@ func (ps *PubSub[T]) WatchWhereReliable(ctx context.Context, predicate func(T) b
 	notify := make(chan struct{}, 1)
 
 	ps.rwmux.Lock()
-	closer := ps.sub(func(msg T) {
+	closer := ps.subscribeLocked(func(msg T) {
 		if predicate != nil && !predicate(msg) {
 			return
 		}
@@ -125,7 +128,7 @@ func (ps *PubSub[T]) WatchWhereReliable(ctx context.Context, predicate func(T) b
 	})
 	ps.rwmux.Unlock()
 
-	Go(func() {
+	Go(ps.Logger, func() {
 		defer func() {
 			mu.Lock()
 			closed = true
@@ -187,7 +190,7 @@ func (ps *PubSub[T]) WatchOnce(ctx context.Context) (*T, error) {
 	var closer func()
 	ps.rwmux.Lock()
 	resultChan := make(chan T, 1)
-	closer = ps.sub(func(msg T) {
+	closer = ps.subscribeLocked(func(msg T) {
 		once.Do(func() {
 			select {
 			case resultChan <- msg:
@@ -196,9 +199,7 @@ func (ps *PubSub[T]) WatchOnce(ctx context.Context) (*T, error) {
 		})
 	})
 	ps.rwmux.Unlock()
-	defer func() {
-		closer()
-	}()
+	defer closer()
 	select {
 	case <-ctx.Done():
 		return nil, ctx.Err()
@@ -218,10 +219,11 @@ func (ps *PubSub[T]) SubscriberCount() int {
 func (ps *PubSub[T]) Subscribe(sub Subscriber[T]) func() {
 	ps.rwmux.Lock()
 	defer ps.rwmux.Unlock()
-	return ps.sub(sub)
+	return ps.subscribeLocked(sub)
 }
 
-func (ps *PubSub[T]) sub(sub Subscriber[T]) func() {
+// subscribeLocked requires rwmux to be held by the caller.
+func (ps *PubSub[T]) subscribeLocked(sub Subscriber[T]) func() {
 	subID := ps.nextID.Add(1)
 	before := len(ps.subscribers)
 	ps.subscribers[subID] = sub

@@ -98,7 +98,7 @@ func (p *Page) queryMainRuntimeFullscreen() (bool, bool) {
 			const state = ` + call + `;
 			return !!state?.active;
 		})()`
-	result, err := p.evalfResult("%s", expr)
+	result, err := p.evalfResultContext(context.Background(), "%s", expr)
 	if err != nil {
 		return false, false
 	}
@@ -107,7 +107,7 @@ func (p *Page) queryMainRuntimeFullscreen() (bool, bool) {
 }
 
 func (p *Page) startPrintRequestPoller(ctx context.Context, expected chan printResult) {
-	syncutil.Go(func() {
+	syncutil.Go(p.manager.Logger(), func() {
 		for ctx.Err() == nil {
 			p.printMu.Lock()
 			waiter := p.nextPrintWaiter

@@ -320,8 +320,8 @@ export class FrameBridge {
         const set = this.messageListeners.get(data.channel);
         if (set) {
             for (const handler of set) {
-                try { handler(data.payload, event); } catch (error) {
-                    console.error(`[FrameBridge] event handler error on channel "${data.channel}":`, error);
+                try { handler(data.payload, event); } catch {
+                    // One notification listener must not prevent delivery to the others.
                 }
             }
         }
@@ -360,7 +360,6 @@ export class FrameBridge {
             const result = await handler(data.payload, event);
             this.sendResponse(sourceWindow, data, {ok: true, value: result});
         } catch (error) {
-            console.error(`[FrameBridge] request handler error on channel "${data.channel}":`, error);
             this.sendResponse(sourceWindow, data, {
                 ok: false,
                 error: error instanceof Error ? error.message : String(error ?? 'unknown error'),

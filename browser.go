@@ -3,7 +3,6 @@ package cdp
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"maps"
 	"os"
@@ -14,7 +13,7 @@ import (
 	"time"
 
 	engine "gopkg.d7z.net/cdp/internal/engine"
-	launcher "gopkg.d7z.net/cdp/internal/launcher"
+	"gopkg.d7z.net/cdp/internal/launcher"
 )
 
 type Browser struct {
@@ -51,6 +50,10 @@ func Launch(ctx context.Context, opts LaunchOptions) (*Browser, error) {
 	if err = ctx.Err(); err != nil {
 		return nil, err
 	}
+	environmentArgs, screen, err := opts.environmentConfig()
+	if err != nil {
+		return nil, operationError("launch", err)
+	}
 	profile := opts.UserDataDir
 	temporary := ""
 	if profile == "" {
@@ -76,12 +79,7 @@ func Launch(ctx context.Context, opts LaunchOptions) (*Browser, error) {
 	if !opts.Headful {
 		cfg.CustomArgs = append(cfg.CustomArgs, "--headless=new")
 	}
-	if opts.WindowSize.Width > 0 && opts.WindowSize.Height > 0 {
-		cfg.CustomArgs = append(cfg.CustomArgs, fmt.Sprintf("--window-size=%d,%d", opts.WindowSize.Width, opts.WindowSize.Height))
-	}
-	if opts.UserAgent != "" {
-		cfg.CustomArgs = append(cfg.CustomArgs, "--user-agent="+opts.UserAgent)
-	}
+	cfg.CustomArgs = append(cfg.CustomArgs, environmentArgs...)
 	for _, hook := range opts.Extensions {
 		if hook == nil {
 			cleanup(nil)
@@ -110,7 +108,7 @@ func Launch(ctx context.Context, opts LaunchOptions) (*Browser, error) {
 		cleanup(nil)
 		return nil, ErrProfileInUse
 	}
-	b, err := connect(setup, endpoint, ConnectOptions{Diagnostics: diagnostics, Timeouts: t, ActionMode: opts.ActionMode, Initialize: opts.Initialize, Logger: opts.Logger})
+	b, err := connect(setup, endpoint, ConnectOptions{Diagnostics: diagnostics, Timeouts: t, ActionMode: opts.ActionMode, Initialize: opts.Initialize, Logger: opts.Logger}, screen)
 	if err != nil {
 		cleanup(proc)
 		return nil, err
@@ -122,9 +120,9 @@ func Launch(ctx context.Context, opts LaunchOptions) (*Browser, error) {
 	return b, nil
 }
 func Connect(ctx context.Context, endpoint string, opts ConnectOptions) (*Browser, error) {
-	return connect(ctx, endpoint, opts)
+	return connect(ctx, endpoint, opts, engine.ScreenConfig{})
 }
-func connect(ctx context.Context, endpoint string, opts ConnectOptions) (*Browser, error) {
+func connect(ctx context.Context, endpoint string, opts ConnectOptions, screen engine.ScreenConfig) (*Browser, error) {
 	if ctx == nil {
 		return nil, errors.New("nil context")
 	}
@@ -143,7 +141,7 @@ func connect(ctx context.Context, endpoint string, opts ConnectOptions) (*Browse
 	b := &Browser{diagnostics: diagnostics, timeouts: t, endpoint: endpoint, cancel: cancel, logger: opts.Logger, closeDone: make(chan struct{}), pages: map[string]*Page{}}
 	setup, stop := context.WithTimeout(ctx, t.Connect)
 	defer stop()
-	manager, err := engine.ConnectManager(setup, life, endpoint, engine.BrowserManagerConfig{RuntimeDiagnostics: diagnostics == DiagnosticsRuntime, ConnectTimeout: t.Connect, DefaultActionMode: engine.ActionMode(opts.ActionMode), Initialize: func(m *engine.BrowserManager) error {
+	manager, err := engine.ConnectManager(setup, life, endpoint, engine.BrowserManagerConfig{Screen: screen, Logger: opts.Logger, RuntimeDiagnostics: diagnostics == DiagnosticsRuntime, ConnectTimeout: t.Connect, DefaultActionMode: engine.ActionMode(opts.ActionMode), Initialize: func(m *engine.BrowserManager) error {
 		b.manager = m
 		if opts.Initialize != nil {
 			return opts.Initialize(&Initializer{browser: b, manager: m})

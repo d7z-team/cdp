@@ -6,7 +6,7 @@ func TestLoadBrowserConfig(t *testing.T) {
 	env := map[string]string{
 		EnvE2EBrowser:    "1",
 		EnvE2EChrome:     "/tmp/chrome",
-		EnvE2EChromeArgs: "--headless=new,--window-size=1440,960",
+		EnvE2EChromeArgs: "--headless=new,--lang=zh-CN",
 	}
 	cfg := LoadBrowserConfig(func(key string) (string, bool) {
 		val, ok := env[key]

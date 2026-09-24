@@ -64,7 +64,7 @@ frame := page.FrameLocator("#outer").FrameLocator("#inner")
 if err := frame.ByTestID("submit").Click(ctx); err != nil { return err }
 ```
 
-也可用 `Locator("#outer").ContentFrame()` 进入 iframe。已知 frame 时优先显式指定作用域；显式作用域优先于运行时的隐式 iframe fallback。跨域 frame 无法诊断时会报告对应原因，与元素不可见区分。
+也可用 `Locator("#outer").ContentFrame()` 进入 iframe。已知 frame 时优先显式指定作用域；显式作用域优先于运行时的隐式 iframe fallback。同源与跨域 iframe 使用相同的定位 API。子 frame 暂不可用时，定位操作在超时预算内等待；无法访问 frame 与元素不可见会分别报告。
 
 ## 等待与交互
 

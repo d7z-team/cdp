@@ -62,7 +62,7 @@ func (r *BrowserManager) RegisterBindingInNamespace(namespace RuntimeNamespace, 
 			continue
 		}
 		if err := page.addBinding(name, namespace); err != nil {
-			slog.Warn("register binding on page failed", "binding", name, "page_id", page.ID, "error", err)
+			r.log(slog.LevelWarn, "register binding on page failed", "binding", name, "page_id", page.ID, "error", err)
 		}
 	}
 	for _, session := range r.targetSessionsSnapshot() {
@@ -70,7 +70,7 @@ func (r *BrowserManager) RegisterBindingInNamespace(namespace RuntimeNamespace, 
 			continue
 		}
 		if err := r.addBindingToTargetSession(r.ctx, session.SessionID, name, namespace); err != nil {
-			slog.Warn("register binding on target session failed", "binding", name, "session_id", session.SessionID, "target_id", session.TargetID, "target_type", session.Type, "error", err)
+			r.log(slog.LevelWarn, "register binding on target session failed", "binding", name, "session_id", session.SessionID, "target_id", session.TargetID, "target_type", session.Type, "error", err)
 		}
 	}
 	return nil
@@ -191,10 +191,10 @@ func (r *BrowserManager) RegisterInitScript(script InitScript) error {
 		err := page.addInitScriptToEvaluateOnNewDocument(script, "register_init_new_doc")
 		page.lock.RUnlock()
 		if err != nil {
-			slog.Warn("register init script for new document failed", "script", script.Name, "page_id", page.ID, "error", err)
+			r.log(slog.LevelWarn, "register init script for new document failed", "script", script.Name, "page_id", page.ID, "error", err)
 		}
 		if err := page.ensureInitScriptInjectedInRuntimeContexts(context.Background(), script, "register_init"); err != nil {
-			slog.Warn("inject init script into page failed", "script", script.Name, "page_id", page.ID, "error", err)
+			r.log(slog.LevelWarn, "inject init script into page failed", "script", script.Name, "page_id", page.ID, "error", err)
 		}
 	}
 	for _, session := range r.targetSessionsSnapshot() {
@@ -202,7 +202,7 @@ func (r *BrowserManager) RegisterInitScript(script InitScript) error {
 			continue
 		}
 		if err := r.addInitScriptToTargetSession(r.ctx, session.SessionID, script, "register_init_new_doc"); err != nil {
-			slog.Warn("register init script on target session failed", "script", script.Name, "session_id", session.SessionID, "target_id", session.TargetID, "target_type", session.Type, "error", err)
+			r.log(slog.LevelWarn, "register init script on target session failed", "script", script.Name, "session_id", session.SessionID, "target_id", session.TargetID, "target_type", session.Type, "error", err)
 		}
 	}
 	return nil

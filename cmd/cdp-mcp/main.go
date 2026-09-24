@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"log/slog"
 	"net"
 	"net/http"
 	"os"
@@ -35,8 +36,8 @@ type serverConfig struct {
 	noHeadless  bool
 	browserPath string
 	userDataDir string
-	windowSize  string
-	userAgent   string
+	windowSize  cdp.WindowSize
+	screen      cdp.ScreenOptions
 	maxTabs     int
 	httpOptions mcpapp.HTTPOptions
 }
@@ -53,6 +54,7 @@ func (values *stringListFlag) Set(value string) error {
 func parseConfig(args []string) (serverConfig, error) {
 	config := serverConfig{}
 	var corsOrigins stringListFlag
+	var windowSize, screenSize string
 	flags := flag.NewFlagSet("cdp-mcp", flag.ContinueOnError)
 	flags.StringVar(&config.diagnostics, "diagnostics", "off", "Runtime diagnostics: off or runtime")
 	flags.StringVar(&config.host, "host", "127.0.0.1", "HTTP server listen address")
@@ -60,12 +62,29 @@ func parseConfig(args []string) (serverConfig, error) {
 	flags.BoolVar(&config.noHeadless, "no-headless", false, "Show browser window (disable headless mode)")
 	flags.StringVar(&config.browserPath, "browser-path", "", "Browser executable path (auto-detect if empty)")
 	flags.StringVar(&config.userDataDir, "user-data-dir", "", "Browser user data directory (default ~/.config/browser-mcp)")
-	flags.StringVar(&config.windowSize, "window-size", "1440,960", "Browser window size WxH (width,height)")
-	flags.StringVar(&config.userAgent, "ua", "", "Default User-Agent for all pages (not applied if empty)")
+	flags.StringVar(&windowSize, "window-size", "1440,960", "Browser window size width,height")
+	flags.StringVar(&screenSize, "screen-size", "", "Headless screen width,height (default at least 1920,1080)")
+	flags.Float64Var(&config.screen.ScaleFactor, "screen-scale", 0, "Headless screen scale (default 1)")
 	flags.IntVar(&config.maxTabs, "max-tabs", 10, "Maximum number of open tabs")
 	flags.Var(&corsOrigins, "cors-origin", "Allowed browser Origin; repeat for multiple origins, or use '*' for insecure testing")
 	if err := flags.Parse(args); err != nil {
 		return serverConfig{}, err
+	}
+	for _, size := range []struct {
+		raw           string
+		width, height *int
+	}{{windowSize, &config.windowSize.Width, &config.windowSize.Height}, {screenSize, &config.screen.Width, &config.screen.Height}} {
+		if size.raw == "" {
+			continue
+		}
+		w, h, ok := strings.Cut(size.raw, ",")
+		width, e1 := strconv.Atoi(w)
+		height, e2 := strconv.Atoi(h)
+		if !ok || e1 != nil || e2 != nil || width <= 0 || height <= 0 {
+			return serverConfig{}, fmt.Errorf("invalid size %q", size.raw)
+		}
+		*size.width = width
+		*size.height = height
 	}
 	if config.diagnostics != "off" && config.diagnostics != "runtime" {
 		return serverConfig{}, fmt.Errorf("diagnostics must be off or runtime")
@@ -102,12 +121,7 @@ func run(ctx context.Context, config serverConfig) error {
 		}
 		config.userDataDir = filepath.Join(dir, "browser-mcp")
 	}
-	var size cdp.WindowSize
-	if _, err := fmt.Sscanf(config.windowSize, "%d,%d", &size.Width, &size.Height); err != nil || size.Width <= 0 || size.Height <= 0 {
-		_ = listener.Close()
-		return errors.New("invalid window size")
-	}
-	browser, err := cdp.Launch(ctx, cdp.LaunchOptions{Diagnostics: cdp.DiagnosticsMode(config.diagnostics), Headful: config.noHeadless, ExecutablePath: config.browserPath, UserDataDir: config.userDataDir, WindowSize: size, UserAgent: config.userAgent})
+	browser, err := cdp.Launch(ctx, cdp.LaunchOptions{Logger: slog.Default(), Diagnostics: cdp.DiagnosticsMode(config.diagnostics), Headful: config.noHeadless, ExecutablePath: config.browserPath, UserDataDir: config.userDataDir, WindowSize: config.windowSize, Screen: config.screen})
 	if err != nil {
 		_ = listener.Close()
 		return err
@@ -160,6 +174,9 @@ func run(ctx context.Context, config serverConfig) error {
 
 func main() {
 	config, err := parseConfig(os.Args[1:])
+	if errors.Is(err, flag.ErrHelp) {
+		return
+	}
 	if err != nil {
 		log.Printf("mcp server stopped: %v", err)
 		os.Exit(1)

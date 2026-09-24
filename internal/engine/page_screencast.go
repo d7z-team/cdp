@@ -201,7 +201,7 @@ func (p *Page) ensureScreencast(ctx context.Context, opts ScreencastOptions) err
 	p.signalScreencastChangeLocked()
 	p.screencastMu.Unlock()
 
-	syncutil.Go(func() {
+	syncutil.Go(p.manager.Logger(), func() {
 		defer p.failScreencastState(state)
 		for resp := range resps {
 			var event pageScreencastFrameEvent
@@ -244,7 +244,7 @@ func (p *Page) ensureScreencast(ctx context.Context, opts ScreencastOptions) err
 				_, ackErr := conn.SendMessageContext(ackCtx, "Page.screencastFrameAck", map[string]any{"sessionId": event.SessionID})
 				cancel()
 				if ackErr != nil && !errors.Is(ackErr, ErrBrowserClosed) {
-					slog.Debug("ack screencast frame failed", "page_id", p.ID, "error", ackErr)
+					p.log(slog.LevelDebug, "ack screencast frame failed", "page_id", p.ID, "error", ackErr)
 				}
 			}
 			if !validFrame || !current {

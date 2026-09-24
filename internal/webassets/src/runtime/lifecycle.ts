@@ -30,30 +30,7 @@ declare global {
     }
 }
 
-export function runtimeSlotInstance<T extends RuntimeLifecycleFacade>(slot: RuntimeSlot): T | undefined {
-    switch (slot) {
-        case 'ffi':
-            return getCdpFFI<T>();
-    }
-}
-
-function setRuntimeSlotInstance<T extends RuntimeLifecycleFacade>(slot: RuntimeSlot, instance: T): void {
-    switch (slot) {
-        case 'ffi':
-            setCdpFFI(instance);
-            return;
-    }
-}
-
-function clearRuntimeSlotInstance<T extends RuntimeLifecycleFacade>(slot: RuntimeSlot, instance: T): void {
-    switch (slot) {
-        case 'ffi':
-            clearCdpFFI(instance);
-            return;
-    }
-}
-
-export function runtimeLifecycleSlot<T extends RuntimeLifecycleFacade>(slot: RuntimeSlot): RuntimeLifecycleSlot<T> {
+function runtimeLifecycleSlot<T extends RuntimeLifecycleFacade>(slot: RuntimeSlot): RuntimeLifecycleSlot<T> {
     let root = window.__cdp_runtime_lifecycle;
     if (!root) {
         root = {};
@@ -102,20 +79,13 @@ function ensureCompletion<T extends RuntimeLifecycleFacade>(slot: RuntimeLifecyc
     return slot.completion;
 }
 
-function resetCompletion<T extends RuntimeLifecycleFacade>(slot: RuntimeLifecycleSlot<T>): Promise<T | null> {
-    slot.completion = undefined;
-    slot.resolveCompletion = undefined;
-    return ensureCompletion(slot);
-}
-
 export async function ensureRuntimeStarted<T extends RuntimeLifecycleFacade>(
     slotName: RuntimeSlot,
     create: (generation: number) => T,
     bootstrap: (instance: T) => Promise<void>,
-    onError?: (error: unknown) => void,
 ): Promise<T | null> {
     const slot = runtimeLifecycleSlot<T>(slotName);
-    const existing = runtimeSlotInstance<T>(slotName);
+    const existing = getCdpFFI<T>();
     if (slot.state === 'ready' && existing?.runtimeReady?.()) {
         slot.instance = existing;
         return existing;
@@ -123,7 +93,9 @@ export async function ensureRuntimeStarted<T extends RuntimeLifecycleFacade>(
     if (slot.state === 'starting') {
         return ensureCompletion(slot);
     }
-    const completion = resetCompletion(slot);
+    slot.completion = undefined;
+    slot.resolveCompletion = undefined;
+    const completion = ensureCompletion(slot);
     const generation = slot.generation + 1;
     slot.generation = generation;
     slot.state = 'starting';
@@ -133,11 +105,10 @@ export async function ensureRuntimeStarted<T extends RuntimeLifecycleFacade>(
         instance = create(generation);
     } catch (error) {
         discardRuntimeSlot(slotName, slot, undefined, error);
-        onError?.(error);
         return completion;
     }
     slot.instance = instance;
-    setRuntimeSlotInstance(slotName, instance);
+    setCdpFFI(instance);
 
     void (async () => {
         try {
@@ -155,14 +126,13 @@ export async function ensureRuntimeStarted<T extends RuntimeLifecycleFacade>(
                 slot.failure = error;
                 try {
                     await instance.destroy();
-                } catch (destroyError) {
-                    console.warn(`[CDP] failed to destroy partial ${slotName} runtime`, destroyError);
+                } catch {
+                    // Preserve the bootstrap failure if partial cleanup also fails.
                 }
-                clearRuntimeSlotInstance(slotName, instance);
+                clearCdpFFI(instance);
                 slot.instance = undefined;
                 discardRuntimeSlot(slotName, slot, undefined, error);
             }
-            onError?.(error);
         }
     })();
     return completion;

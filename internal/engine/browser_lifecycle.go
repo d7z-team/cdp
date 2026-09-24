@@ -72,15 +72,6 @@ func (r *BrowserManager) ShutdownDone() <-chan struct{} {
 	return r.shutdownDone
 }
 
-func (r *BrowserManager) Disconnect() {
-	if r == nil || r.cancel == nil {
-		return
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), browserManagerShutdownTimeout)
-	defer cancel()
-	_ = r.shutdown(ctx, shutdownReasonDisconnect)
-}
-
 func (r *BrowserManager) DisconnectContext(ctx context.Context) error {
 	return r.shutdown(ctx, shutdownReasonDisconnect)
 }
@@ -165,7 +156,7 @@ func (r *BrowserManager) shutdown(ctx context.Context, reason ShutdownReason) er
 				cancel()
 			}
 			bindsDone := make(chan struct{})
-			syncutil.Go(func() {
+			syncutil.Go(r.Logger(), func() {
 				r.pageBindWG.Wait()
 				close(bindsDone)
 			})
@@ -191,7 +182,7 @@ func (r *BrowserManager) shutdown(ctx context.Context, reason ShutdownReason) er
 				r.cancel()
 			}
 			pageWatchesDone := make(chan struct{})
-			syncutil.Go(func() {
+			syncutil.Go(r.Logger(), func() {
 				r.pageWatchWG.Wait()
 				close(pageWatchesDone)
 			})

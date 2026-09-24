@@ -524,7 +524,7 @@ func (p *Page) resolveUploadFileInputBackendNodeID(ctx context.Context, target E
 	}
 	desc, err := p.DescribeNodeByObjectIDInTargetContext(ctx, target, objectID)
 	defer func() {
-		logReleaseObjectError("释放上传文件输入框对象失败", objectID, p.ReleaseObjectInTargetContext(ctx, target, objectID))
+		p.logReleaseObjectError(objectID, p.ReleaseObjectInTargetContext(ctx, target, objectID))
 	}()
 	if err != nil {
 		return 0, err

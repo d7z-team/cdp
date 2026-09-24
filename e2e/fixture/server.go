@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-//go:embed pages/*.html
+//go:embed pages/*.html assets/*.js
 var pageFS embed.FS
 
 // Server owns an HTTP fixture server.
@@ -56,10 +56,19 @@ func registerFixtureRoutes(mux *http.ServeMux) {
 		}
 		mux.HandleFunc(route, handler)
 	}
+	assets, err := fs.Sub(pageFS, "assets")
+	if err != nil {
+		panic(err)
+	}
+	mux.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.FS(assets))))
 	registerAPIRoutes(mux)
 }
 
 func registerAPIRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("/api/headers", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(r.Header)
+	})
 	mux.HandleFunc("/api/hello", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -140,6 +149,9 @@ func serverBaseURL(r *http.Request) string {
 
 func serveFixturePage(name string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(name, "identity") {
+			w.Header().Set("Accept-CH", "Sec-CH-UA-Full-Version-List, Sec-CH-UA-Arch, Sec-CH-UA-Bitness")
+		}
 		body, err := pageFS.ReadFile("pages/" + name)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("fixture page %s not found", name), http.StatusInternalServerError)

@@ -1,0 +1,69 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Worker communication</title>
+<button id="run">Run workers</button>
+<output id="result"></output>
+<script>
+  async function runWorkers() {
+    const results = {};
+    for (const kind of ['blob', 'classic', 'module', 'nested', 'shared', 'service']) {
+      const cleanup = [];
+      let timer;
+      try {
+        results[kind] = await Promise.race([
+          new Promise((_, reject) => {
+            timer = setTimeout(() => reject(new Error(kind + ' timeout')), 5000);
+          }),
+          (async () => {
+            let port;
+            if (kind === 'service') {
+              const registration = await navigator.serviceWorker.register('/assets/service-worker.js');
+              cleanup.push(() => registration.unregister());
+              const worker = registration.installing || registration.waiting || registration.active;
+              if (worker.state !== 'activated') {
+                await new Promise(resolve => worker.addEventListener('statechange', () => {
+                  if (worker.state === 'activated') resolve();
+                }));
+              }
+              const channel = new MessageChannel();
+              cleanup.push(() => channel.port1.close());
+              return await new Promise(resolve => {
+                channel.port1.onmessage = event => resolve(event.data);
+                worker.postMessage(21, [channel.port2]);
+              });
+            }
+            if (kind === 'shared') {
+              const worker = new SharedWorker('/assets/shared-worker.js');
+              port = worker.port;
+              cleanup.push(() => port.close());
+              port.start();
+            } else {
+              let url = kind === 'nested' ? '/assets/nested-worker.js' : '/assets/worker.js';
+              if (kind === 'blob') {
+                url = URL.createObjectURL(new Blob(['onmessage=e=>postMessage(e.data*2)'], {type:'application/javascript'}));
+                cleanup.push(() => URL.revokeObjectURL(url));
+              }
+              port = new Worker(url, {type:kind === 'module' ? 'module' : 'classic'});
+              cleanup.push(() => port.terminate());
+            }
+            return await new Promise((resolve, reject) => {
+              port.onmessage = event => resolve(event.data);
+              port.onerror = event => reject(new Error(event.message));
+              port.postMessage(21);
+            });
+          })()
+        ]);
+      } finally {
+        clearTimeout(timer);
+        for (const release of cleanup.reverse()) await release();
+      }
+    }
+    return results;
+  }
+  document.querySelector('#run').onclick = async () => {
+    const output = document.querySelector('#result');
+    try { output.textContent = JSON.stringify(await runWorkers()); }
+    catch (error) { output.textContent = String(error); }
+    output.dataset.ready = 'true';
+  };
+</script>

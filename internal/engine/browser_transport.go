@@ -93,7 +93,7 @@ func (r *BrowserManager) wsWithContexts(dialCtx, connCtx context.Context, path s
 		return nil, nil, err
 	}
 	dialContext.SetReadLimit(1024 * 1024 * 1024)
-	conn, c := NewCdpConn(connCtx, dialContext, r.idGroup)
+	conn, c := NewCdpConn(connCtx, dialContext, r.idGroup, r.Logger())
 	return conn, c, nil
 }
 

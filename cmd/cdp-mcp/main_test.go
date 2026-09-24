@@ -49,3 +49,18 @@ func TestParseConfigPortAndAddress(t *testing.T) {
 		})
 	}
 }
+
+func TestParseScreenConfiguration(t *testing.T) {
+	config, err := parseConfig([]string{"-window-size", "1440,960", "-screen-size", "1920,1080", "-screen-scale", "2"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if config.windowSize.Width != 1440 || config.windowSize.Height != 960 || config.screen.Width != 1920 || config.screen.Height != 1080 || config.screen.ScaleFactor != 2 {
+		t.Fatalf("config=%+v", config)
+	}
+	for _, value := range []string{"800", "800,600extra", "0,600", "800,-1", "800,600,400"} {
+		if _, err := parseConfig([]string{"-screen-size", value}); err == nil {
+			t.Errorf("accepted invalid screen %q", value)
+		}
+	}
+}

@@ -1,6 +1,6 @@
-//go:build !windows && !darwin
+//go:build !windows
 
-package browser
+package launcher
 
 import (
 	"os"

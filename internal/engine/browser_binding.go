@@ -100,7 +100,7 @@ func (r *BrowserManager) requestPageBind(id string, failedOnly bool) {
 	r.pageBindWG.Add(1)
 	r.notifyPageBindChangeLocked()
 	r.pageBindMu.Unlock()
-	syncutil.Go(func() {
+	syncutil.Go(r.Logger(), func() {
 		defer r.pageBindWG.Done()
 		r.runPageBind(id, version, attempt)
 	})
@@ -166,9 +166,9 @@ func (r *BrowserManager) runPageBind(id string, version uint64, attempt pageBind
 			r.publishPageRuntimeReady(attempt.page)
 			r.notifyPageBindChangeLocked()
 			r.pageBindMu.Unlock()
-			slog.Debug("page init done", "id", attempt.page.ID)
+			r.log(slog.LevelDebug, "page init done", "id", attempt.page.ID)
 			r.pageWatchWG.Add(1)
-			syncutil.Go(func() {
+			syncutil.Go(r.Logger(), func() {
 				defer r.pageWatchWG.Done()
 				select {
 				case <-r.Done():
@@ -210,7 +210,7 @@ func (r *BrowserManager) runPageBind(id string, version uint64, attempt pageBind
 			version = state.targetVersion
 			retried = true
 			r.pageBindMu.Unlock()
-			slog.Debug("retry page bind for newer target event", "page_id", id, "error", err)
+			r.log(slog.LevelDebug, "retry page bind for newer target event", "page_id", id, "error", err)
 			attempt = successor
 			continue
 		}
@@ -232,9 +232,9 @@ func (r *BrowserManager) runPageBind(id string, version uint64, attempt pageBind
 		}
 
 		if !r.IsAlive() || errors.Is(err, context.Canceled) || errors.Is(err, ErrBrowserClosed) {
-			slog.Debug("page bind stopped", "page_id", id, "error", err)
+			r.log(slog.LevelDebug, "page bind stopped", "page_id", id, "error", err)
 		} else {
-			slog.Warn("page bind failed", "page_id", id, "error", err)
+			r.log(slog.LevelWarn, "page bind failed", "page_id", id, "error", err)
 		}
 		return
 	}
@@ -282,7 +282,7 @@ func (r *BrowserManager) cleanupFailedPageBind(page *Page, pageCancel context.Ca
 	}
 	cleanupCancel()
 	if len(cleanupErrors) > 0 {
-		slog.Debug("partial page bind cleanup incomplete", "page_id", page.ID, "error", errors.Join(cleanupErrors...))
+		r.log(slog.LevelDebug, "partial page bind cleanup incomplete", "page_id", page.ID, "error", errors.Join(cleanupErrors...))
 	}
 	if pageCancel != nil {
 		pageCancel()
@@ -379,7 +379,7 @@ func (r *BrowserManager) handlePageConnectionClosed(id string, page *Page, pageC
 	r.pageBindMu.Unlock()
 
 	if retry {
-		syncutil.Go(func() {
+		syncutil.Go(r.Logger(), func() {
 			defer r.pageBindWG.Done()
 			r.runPageBind(id, version, successor)
 		})

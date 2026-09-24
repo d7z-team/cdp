@@ -215,18 +215,6 @@ func TestSelectorSetTextContent(t *testing.T) {
 	}
 }
 
-func TestSelectorSetText(t *testing.T) {
-	if !browserEnabled {
-		t.Skip("set CDP_E2E_BROWSER=1")
-	}
-	page := openFixture(t, "/props")
-	el := page.ByTestID("set-text-alias")
-	mustOK(el.SetTextContent(context.Background(), "alias text"))
-	if text := must(el.TextContent(context.Background())); text != "alias text" {
-		t.Fatalf("SetText then TextContent = %q, want alias text", text)
-	}
-}
-
 func TestSelectorExists(t *testing.T) {
 	if !browserEnabled {
 		t.Skip("set CDP_E2E_BROWSER=1")

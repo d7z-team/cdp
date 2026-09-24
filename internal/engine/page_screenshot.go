@@ -228,7 +228,7 @@ func (p *Page) captureWithScreenshotScreencast(ctx context.Context, capture func
 		cleanupCtx, cancel := p.screenshotCleanupContext()
 		defer cancel()
 		if err := p.StopScreencastFor(cleanupCtx, ScreencastOwnerScreenshot); err != nil && !errors.Is(err, ErrBrowserClosed) {
-			slog.Debug("stop screenshot screencast failed", "page_id", p.ID, "error", err)
+			p.log(slog.LevelDebug, "stop screenshot screencast failed", "page_id", p.ID, "error", err)
 		}
 	}()
 	return capture()
@@ -273,7 +273,7 @@ func (p *Page) suspendInjectedOverlaysBeforeScreenshot(ctx context.Context, targ
 	))
 	if err != nil {
 		if !errors.Is(err, ErrBrowserClosed) {
-			slog.Debug("suspend injected overlays before screenshot failed", "page_id", p.ID, "error", err)
+			p.log(slog.LevelDebug, "suspend injected overlays before screenshot failed", "page_id", p.ID, "error", err)
 		}
 		return ""
 	}
@@ -290,7 +290,7 @@ func (p *Page) restoreInjectedOverlaysAfterScreenshot(ctx context.Context, targe
 		"core screenshot helper is not available",
 		webassets.JSLit(token),
 	)); err != nil && !errors.Is(err, ErrBrowserClosed) {
-		slog.Debug("restore injected overlays after screenshot failed", "page_id", p.ID, "token", token, "error", err)
+		p.log(slog.LevelDebug, "restore injected overlays after screenshot failed", "page_id", p.ID, "token", token, "error", err)
 	}
 }
 
@@ -343,7 +343,7 @@ func (p *Page) revealFrameOwnerForScreenshot(ctx context.Context, target Executi
 	}
 	res, err := p.sendTargetMessage(ctx, topPageExecutionTarget(), "DOM.getFrameOwner", map[string]any{"frameId": frameID})
 	if err != nil {
-		slog.Debug("get frame owner for screenshot failed", "page_id", p.ID, "frame_id", frameID, "error", err)
+		p.log(slog.LevelDebug, "get frame owner for screenshot failed", "page_id", p.ID, "frame_id", frameID, "error", err)
 		return
 	}
 	backendNodeID, _ := SafeGet[float64](res, "backendNodeId")
@@ -351,14 +351,14 @@ func (p *Page) revealFrameOwnerForScreenshot(ctx context.Context, target Executi
 	switch {
 	case backendNodeID > 0:
 		if err := p.sendTargetPacket(ctx, topPageExecutionTarget(), "DOM.scrollIntoViewIfNeeded", map[string]any{"backendNodeId": int(backendNodeID)}); err != nil {
-			slog.Debug("scroll frame owner into view for screenshot failed", "page_id", p.ID, "frame_id", frameID, "backend_node_id", int(backendNodeID), "error", err)
+			p.log(slog.LevelDebug, "scroll frame owner into view for screenshot failed", "page_id", p.ID, "frame_id", frameID, "backend_node_id", int(backendNodeID), "error", err)
 		}
 	case nodeID > 0:
 		if err := p.sendTargetPacket(ctx, topPageExecutionTarget(), "DOM.scrollIntoViewIfNeeded", map[string]any{"nodeId": int(nodeID)}); err != nil {
-			slog.Debug("scroll frame owner node into view for screenshot failed", "page_id", p.ID, "frame_id", frameID, "node_id", int(nodeID), "error", err)
+			p.log(slog.LevelDebug, "scroll frame owner node into view for screenshot failed", "page_id", p.ID, "frame_id", frameID, "node_id", int(nodeID), "error", err)
 		}
 	default:
-		slog.Debug("frame owner for screenshot has no node id", "page_id", p.ID, "frame_id", frameID)
+		p.log(slog.LevelDebug, "frame owner for screenshot has no node id", "page_id", p.ID, "frame_id", frameID)
 	}
 }
 
@@ -415,7 +415,7 @@ func (p *Page) finishPageScreenshotPlan(ctx context.Context, target ExecutionTar
 		"finishPageScreenshot",
 		webassets.JSLit(token),
 	)); err != nil && !errors.Is(err, ErrBrowserClosed) {
-		slog.Debug("finish page screenshot plan failed", "page_id", p.ID, "token", token, "error", err)
+		p.log(slog.LevelDebug, "finish page screenshot plan failed", "page_id", p.ID, "token", token, "error", err)
 	}
 }
 
@@ -477,12 +477,12 @@ func (p *Page) finishBackendNodeScreenshotPlan(ctx context.Context, target Execu
 	), map[string]any{"value": token})
 	if err != nil {
 		if !errors.Is(err, ErrBrowserClosed) {
-			slog.Debug("finish backend node screenshot plan failed", "page_id", p.ID, "method", method, "token", token, "error", err)
+			p.log(slog.LevelDebug, "finish backend node screenshot plan failed", "page_id", p.ID, "method", method, "token", token, "error", err)
 		}
 		return
 	}
 	if runtimeErr := runtimeResultError(res); runtimeErr != nil && !errors.Is(runtimeErr, ErrBrowserClosed) {
-		slog.Debug("finish backend node screenshot plan failed", "page_id", p.ID, "method", method, "token", token, "error", runtimeErr)
+		p.log(slog.LevelDebug, "finish backend node screenshot plan failed", "page_id", p.ID, "method", method, "token", token, "error", runtimeErr)
 	}
 }
 

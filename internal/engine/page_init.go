@@ -118,7 +118,7 @@ func (r *BrowserManager) ensureInitScriptRuntime(ctx context.Context, key initSc
 				}
 			}
 			if err != nil {
-				slog.Debug("init script probe failed, retry installation", "page_id", key.PageID, "session_id", key.SessionID, "context_id", key.ContextID, "script", script.Name, "error", err)
+				r.log(slog.LevelDebug, "init script probe failed, retry installation", "page_id", key.PageID, "session_id", key.SessionID, "context_id", key.ContextID, "script", script.Name, "error", err)
 			}
 		}
 		result, err := evaluate(ctx, r.initScriptSource(script, action, "exec"))

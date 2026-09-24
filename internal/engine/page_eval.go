@@ -28,10 +28,6 @@ func (p *Page) EvalfResult(cmd string, args ...any) (result map[string]any, err 
 	return p.evalfResultContext(context.Background(), cmd, args...)
 }
 
-func (p *Page) evalfResult(cmd string, args ...any) (map[string]any, error) {
-	return p.evalfResultContext(context.Background(), cmd, args...)
-}
-
 func (p *Page) EvalfResultContext(ctx context.Context, cmd string, args ...any) (result map[string]any, err error) {
 	p.lock.RLock()
 	defer p.lock.RUnlock()

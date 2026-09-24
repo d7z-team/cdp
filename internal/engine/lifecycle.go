@@ -793,7 +793,7 @@ func (r *BrowserManager) enqueueLifecycle(item lifecycleDispatchItem) {
 	queue.running = true
 	queue.mu.Unlock()
 
-	syncutil.Go(func() {
+	syncutil.Go(r.Logger(), func() {
 		for {
 			queue.mu.Lock()
 			if len(queue.pending) == 0 {
@@ -808,7 +808,7 @@ func (r *BrowserManager) enqueueLifecycle(item lifecycleDispatchItem) {
 
 			for _, registration := range current.registrations {
 				if err := registration.handler.HandleLifecycle(current.ctx, current.event); err != nil {
-					slog.Warn("lifecycle handler failed", "handler", registration.handler.Name(), "event", current.event.Type, "page_id", current.event.PageID, "sequence", current.event.Sequence, "error", err)
+					r.log(slog.LevelWarn, "lifecycle handler failed", "handler", registration.handler.Name(), "event", current.event.Type, "page_id", current.event.PageID, "sequence", current.event.Sequence, "error", err)
 				}
 			}
 		}

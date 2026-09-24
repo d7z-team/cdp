@@ -13,7 +13,6 @@ import {cloneDiagnostic, makeUnavailableFrameDiagnostic, applyFrameElementDiagno
 import {domReady} from "../../utils/dom";
 import {CallCore} from "../../bindings/core";
 import {shouldSkipBootstrapInCurrentFrame} from "../../utils/internal_ids";
-import {withFrameTag} from "../../utils/frame_log";
 import {
     applyElementScreenshotTile,
     applyFrameDocumentScreenshotTile,
@@ -57,7 +56,6 @@ import {ensureRuntimeStarted, markRuntimeDestroyed} from "../../runtime/lifecycl
 import {MouseVisualController} from "../../pointer";
 import type {MouseVisualAction} from "../../pointer";
 
-const LOG_PREFIX = "[CDP CORE]";
 export const CORE_HELPER_VERSION = "core-2026-06-04-screencast-screenshot-v1";
 const HIGHLIGHT_DRAW_OWNER = 'page-highlight' as const;
 const MAX_HIGHLIGHT_RECTS = 256;
@@ -143,10 +141,9 @@ export class CdpFFI {
             return;
         }
         if (shouldSkipBootstrapInCurrentFrame()) {
-            console.log(withFrameTag(`${LOG_PREFIX} bootstrap skipped for internal frame`));
             return;
         }
-        console.log(withFrameTag(`${LOG_PREFIX} bootstrap start`));
+
         this.call = new CallCore();
         if (!this.isRuntimeGeneration(this.runtimeGeneration)) {
             return;
@@ -287,15 +284,13 @@ export class CdpFFI {
         this.focusHandler = () => {
             try {
                 this.call.onFocus();
-            } catch (e) {
-                console.error(withFrameTag(`${LOG_PREFIX} focus sync failed:`), e);
+            } catch {
+                // Focus notification is best effort during navigation or teardown.
             }
         };
         window.addEventListener('focus', this.focusHandler);
         if (document.hasFocus()) {
-            void Promise.resolve(this.call.onFocus()).catch((error) => {
-                console.warn(withFrameTag(`${LOG_PREFIX} initial focus sync failed:`), error);
-            });
+            this.focusHandler();
         }
         if (!this.isRuntimeGeneration(this.runtimeGeneration)) {
             return;
@@ -303,7 +298,6 @@ export class CdpFFI {
         this.bootstrapped = true;
         this.ready = true;
         this.announceRuntimeReady();
-        console.log(withFrameTag(`${LOG_PREFIX} bootstrap complete`));
     }
 
     public runtimeReady(): boolean {
@@ -338,37 +332,36 @@ export class CdpFFI {
             return;
         }
         this.destroying = true;
-        console.log(withFrameTag(`${LOG_PREFIX} cleanup start`));
+
         const failures: unknown[] = [];
-        const cleanup = (name: string, action: () => void) => {
+        const cleanup = (action: () => void) => {
             try {
                 action();
             } catch (error) {
                 failures.push(error);
-                console.warn(withFrameTag(`${LOG_PREFIX} failed to clean ${name}:`), error);
             }
         };
         const focusHandler = this.focusHandler;
-        if (focusHandler) cleanup('focus listener', () => {
+        if (focusHandler) cleanup(() => {
             window.removeEventListener('focus', focusHandler);
             this.focusHandler = undefined;
         });
-        cleanup('bridge', () => {
+        cleanup(() => {
             this.bridge?.destroy();
         });
-        cleanup('binding', () => this.call?.destroy?.());
-        cleanup('run runtime', () => this.run?.destroy?.());
-        cleanup('pointer', () => this.pointer?.destroy());
-        cleanup('highlight tracking', () => this.clearActiveHighlightTracking());
-        cleanup('selector query runtime', () => this.queryRuntime?.clear());
-        cleanup('snapshot registry', () => this.snapshotRegistry.dispose());
-        cleanup('DOM revision tracker', () => this.domRevision.destroy());
-        cleanup('canvas', () => this.canvas?.destroy());
+        cleanup(() => this.call?.destroy?.());
+        cleanup(() => this.run?.destroy?.());
+        cleanup(() => this.pointer?.destroy());
+        cleanup(() => this.clearActiveHighlightTracking());
+        cleanup(() => this.queryRuntime?.clear());
+        cleanup(() => this.snapshotRegistry.dispose());
+        cleanup(() => this.domRevision.destroy());
+        cleanup(() => this.canvas?.destroy());
         this.bootstrapped = false;
         this.ready = false;
         clearCdpFFI(this);
         markRuntimeDestroyed('ffi', this);
-        console.log(withFrameTag(`${LOG_PREFIX} cleanup complete`));
+
         if (failures.length > 0) {
             throw new AggregateError(failures, 'CDP core runtime cleanup failed');
         }
@@ -571,6 +564,16 @@ export class CdpFFI {
                 frameChain: [],
             };
         }
+        if (el.ownerDocument !== document) {
+            return {
+                actionable: false,
+                kind: 'unavailable',
+                summary: 'Element belongs to another frame runtime',
+                detail: 'actionability must run in the element owner document',
+                element: describeElement(el),
+                frameChain: [],
+            };
+        }
         const local = await this.locator.checkActionability(el, options);
         if ((!local.actionable && !local.retriable) || window.parent === window) {
             if (local.localRect && !local.topRect) {
@@ -691,7 +694,7 @@ export class CdpFFI {
         this.highlightRefreshInFlight = true;
         try {
             await this.highlight(activeRequest.selectorInput, activeRequest.options);
-        } catch (e) {
+        } catch {
         } finally {
             this.highlightRefreshInFlight = false;
         }
@@ -820,5 +823,4 @@ void ensureRuntimeStarted(
     'ffi',
     generation => new CdpFFI(generation),
     instance => instance.bootstrap(),
-    error => console.warn(withFrameTag(`${LOG_PREFIX} bootstrap failed:`), error),
 ).then(instance => instance?.bridge.addTransportKey("__FRAME_TRANSPORT_KEY__"));

@@ -53,25 +53,28 @@ func (m DiagnosticsMode) normalized() (DiagnosticsMode, error) {
 
 type WindowSize struct{ Width, Height int }
 type LaunchOptions struct {
-	Diagnostics                            DiagnosticsMode
-	ExecutablePath, UserDataDir, UserAgent string
-	Headful                                bool
-	WindowSize                             WindowSize
-	Args                                   []string
-	CertificateFingerprints                []string
-	HostRules                              map[string]string
-	Extensions                             []ExtensionHook
-	Timeouts                               Timeouts
-	ActionMode                             ActionMode
-	Initialize                             func(*Initializer) error
-	Logger                                 *slog.Logger
+	Diagnostics                 DiagnosticsMode
+	ExecutablePath, UserDataDir string
+	Screen                      ScreenOptions
+	Headful                     bool
+	WindowSize                  WindowSize
+	Args                        []string
+	CertificateFingerprints     []string
+	HostRules                   map[string]string
+	Extensions                  []ExtensionHook
+	Timeouts                    Timeouts
+	ActionMode                  ActionMode
+	Initialize                  func(*Initializer) error
+	// Logger receives instance diagnostics; nil disables ordinary logs.
+	Logger *slog.Logger
 }
 type ConnectOptions struct {
 	Diagnostics DiagnosticsMode
 	Timeouts    Timeouts
 	ActionMode  ActionMode
 	Initialize  func(*Initializer) error
-	Logger      *slog.Logger
+	// Logger receives instance diagnostics; nil disables ordinary logs.
+	Logger *slog.Logger
 }
 
 // ExtensionManifest is a JSON-compatible Chrome extension manifest.

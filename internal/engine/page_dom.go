@@ -33,11 +33,11 @@ type LayoutMetricsResult struct {
 	CSSContentSize    ContentSize    `json:"cssContentSize"`
 }
 
-func logReleaseObjectError(message string, objectID string, err error) {
-	if err == nil || errors.Is(err, ErrBrowserClosed) {
+func (p *Page) logReleaseObjectError(objectID string, err error) {
+	if err == nil || errors.Is(err, ErrBrowserClosed) || errors.Is(err, context.Canceled) || isMissingObjectErr(err) {
 		return
 	}
-	slog.Warn(message, "objectId", objectID, "error", err)
+	p.log(slog.LevelDebug, "release remote object failed", "object_id", objectID, "error", err)
 }
 
 func isMissingNodeErr(err error) bool {
@@ -344,14 +344,14 @@ func (p *Page) callTargetNodeFunction(ctx context.Context, target ExecutionTarge
 	}
 	callRes, err := p.CallFunctionOnInTargetContext(ctx, target, objectID, code, true, args...)
 	if err != nil && isMissingObjectErr(err) {
-		logReleaseObjectError("释放失效对象失败", objectID, p.ReleaseObjectInTargetContext(ctx, target, objectID))
+		p.logReleaseObjectError(objectID, p.ReleaseObjectInTargetContext(ctx, target, objectID))
 		objectID, err = p.resolveNodeObjectInTarget(ctx, target, nodeID)
 		if err != nil {
 			return nil, err
 		}
 		callRes, err = p.CallFunctionOnInTargetContext(ctx, target, objectID, code, true, args...)
 	}
-	logReleaseObjectError("释放对象失败", objectID, p.ReleaseObjectInTargetContext(ctx, target, objectID))
+	p.logReleaseObjectError(objectID, p.ReleaseObjectInTargetContext(ctx, target, objectID))
 	return callRes, BrowserErrorFromCDP("Runtime.callFunctionOn", target, err)
 }
 
@@ -377,13 +377,13 @@ func (p *Page) callTargetBackendNodeFunctionContext(ctx context.Context, target 
 	}
 	callRes, err := p.CallFunctionOnInTargetContext(ctx, target, objectID, code, returnByValue, args...)
 	if err != nil && isMissingObjectErr(err) {
-		logReleaseObjectError("释放失效对象失败", objectID, p.ReleaseObjectInTargetContext(ctx, target, objectID))
+		p.logReleaseObjectError(objectID, p.ReleaseObjectInTargetContext(ctx, target, objectID))
 		objectID, err = p.resolveBackendNodeObjectInTargetContext(ctx, target, backendNodeID)
 		if err != nil {
 			return nil, err
 		}
 		callRes, err = p.CallFunctionOnInTargetContext(ctx, target, objectID, code, returnByValue, args...)
 	}
-	logReleaseObjectError("释放对象失败", objectID, p.ReleaseObjectInTargetContext(ctx, target, objectID))
+	p.logReleaseObjectError(objectID, p.ReleaseObjectInTargetContext(ctx, target, objectID))
 	return callRes, BrowserErrorFromCDP("Runtime.callFunctionOn", target, err)
 }

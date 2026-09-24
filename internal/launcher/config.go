@@ -1,7 +1,7 @@
-// Package browser manages Chrome processes and extension configuration.
-package browser
+// Package launcher manages Chrome processes and extension configuration.
+package launcher
 
-// Config 描述 browser 包启动或附着浏览器实例时使用的配置。
+// Config 描述 launcher 包启动或附着浏览器实例时使用的配置。
 //
 // 同一个 ChromeUserDir 会被视为同一个浏览器实例。
 type Config struct {

@@ -233,7 +233,7 @@ func (p *Page) DisposeSelectorQueryInRuntime(ctx context.Context, runtimeID stri
 		return true;
 	})()`, true)
 	if err != nil {
-		slog.Debug("清理 runtime selector query session 失败", "runtime_id", runtimeID, "token", token, "error", err)
+		p.log(slog.LevelDebug, "release selector query session failed", "runtime_id", runtimeID, "token", token, "error", err)
 	}
 }
 
@@ -247,7 +247,7 @@ func (p *Page) DisposeSelectorQuerySession(ctx context.Context, session Selector
 			return true;
 		}`, map[string]any{"value": session.Token})
 		if err != nil {
-			slog.Debug("清理 target selector query session 失败", "runtime_id", session.RuntimeID, "token", session.Token, "error", err)
+			p.log(slog.LevelDebug, "release target selector query session failed", "runtime_id", session.RuntimeID, "token", session.Token, "error", err)
 		}
 		return
 	}
@@ -257,7 +257,7 @@ func (p *Page) DisposeSelectorQuerySession(ctx context.Context, session Selector
 			return true;
 		})()`, true)
 		if err != nil {
-			slog.Debug("清理 target runtime selector query session 失败", "runtime_id", session.RuntimeID, "token", session.Token, "error", err)
+			p.log(slog.LevelDebug, "release target runtime query session failed", "runtime_id", session.RuntimeID, "token", session.Token, "error", err)
 		}
 		return
 	}
@@ -395,7 +395,7 @@ func (p *Page) selectorQueryBackendNodeID(ctx context.Context, session SelectorQ
 		return ExecutionTarget{}, 0, false, nil
 	}
 	desc, err := p.DescribeNodeByObjectIDInTargetContext(ctx, target, resultObjectID)
-	defer logReleaseObjectError("释放 selector query 节点对象失败", resultObjectID, p.ReleaseObjectInTargetContext(ctx, target, resultObjectID))
+	defer p.logReleaseObjectError(resultObjectID, p.ReleaseObjectInTargetContext(ctx, target, resultObjectID))
 	if err != nil {
 		return ExecutionTarget{}, 0, false, err
 	}
@@ -792,44 +792,17 @@ func selectorTargetActionabilityScript() string {
 				this.scrollIntoView({ behavior: 'instant', block: 'center', inline: 'center' });
 			}
 		}
-		if (cdp) {
-			return await cdp.actionabilityDiagnostic(this, { mode, purpose, allowOutsideViewport: purpose === 'input', scrollIntoView, repositionObscured });
+		if (!cdp || this.ownerDocument !== document) {
+			return {
+				actionable: false,
+				kind: 'unavailable',
+				summary: 'Element runtime is unavailable',
+				detail: 'actionability requires the isolated runtime of the element owner document',
+				element: this.tagName ? this.tagName.toLowerCase() : 'element',
+				frameChain: [],
+			};
 		}
-		if (!(this instanceof Element)) {
-			return null;
-		}
-		const local = this.getBoundingClientRect();
-		let x = local.x;
-		let y = local.y;
-		let win = this.ownerDocument && this.ownerDocument.defaultView;
-		try {
-			while (win && win.parent && win.parent !== win) {
-				const frame = win.frameElement;
-				if (!frame) break;
-				const frameRect = frame.getBoundingClientRect();
-				x += frameRect.x + (frame.clientLeft || 0);
-				y += frameRect.y + (frame.clientTop || 0);
-				win = win.parent;
-			}
-		} catch (_) {}
-		const rect = {x, y, width: local.width, height: local.height};
-		const centerX = rect.x + rect.width / 2;
-		const centerY = rect.y + rect.height / 2;
-		const viewportWidth = window.top ? window.top.innerWidth : window.innerWidth;
-		const viewportHeight = window.top ? window.top.innerHeight : window.innerHeight;
-		const inViewport = centerX >= 0 && centerY >= 0 && centerX <= viewportWidth && centerY <= viewportHeight;
-		return {
-			actionable: inViewport && rect.width > 0 && rect.height > 0,
-			kind: inViewport ? 'ok' : 'outside_viewport',
-			summary: inViewport ? 'Element is actionable' : 'Element center is outside viewport',
-			detail: '',
-			element: this.tagName ? this.tagName.toLowerCase() : 'element',
-			localRect: {x: local.x, y: local.y, width: local.width, height: local.height},
-			topRect: rect,
-			centerX,
-			centerY,
-			frameChain: [],
-		};
+		return await cdp.actionabilityDiagnostic(this, { mode, purpose, allowOutsideViewport: purpose === 'input', scrollIntoView, repositionObscured });
 	}`
 }
 

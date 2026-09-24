@@ -64,6 +64,7 @@ func normalizeBrowserError(err error) error {
 }
 
 type CdpConn struct {
+	logger *slog.Logger
 	context.Context
 	conn *websocket.Conn
 
@@ -94,9 +95,10 @@ func (c *CdpConn) unavailableErr() error {
 	return nil
 }
 
-func NewCdpConn(ctx context.Context, conn *websocket.Conn, idGroup *atomic.Int64) (*CdpConn, <-chan struct{}) {
+func NewCdpConn(ctx context.Context, conn *websocket.Conn, idGroup *atomic.Int64, logger *slog.Logger) (*CdpConn, <-chan struct{}) {
 	ctx, cancel := context.WithCancel(ctx)
 	c := &CdpConn{
+		logger:  logger,
 		Context: ctx,
 		conn:    conn,
 		idGroup: idGroup,
@@ -104,7 +106,8 @@ func NewCdpConn(ctx context.Context, conn *websocket.Conn, idGroup *atomic.Int64
 		event:   syncutil.NewPubSub[CDPResponse](nil),
 		events:  make(chan cdpEventQueueItem, 256),
 	}
-	syncutil.Go(func() {
+	c.event.Logger = logger
+	syncutil.Go(c.logger, func() {
 		for {
 			select {
 			case item := <-c.events:
@@ -121,7 +124,7 @@ func NewCdpConn(ctx context.Context, conn *websocket.Conn, idGroup *atomic.Int64
 		}
 	})
 	ch := make(chan struct{}, 1)
-	syncutil.Go(func() {
+	syncutil.Go(c.logger, func() {
 		defer cancel()
 		defer func() {
 			if c != nil && c.conn != nil {
@@ -140,7 +143,7 @@ func NewCdpConn(ctx context.Context, conn *websocket.Conn, idGroup *atomic.Int64
 				err = normalizeBrowserError(err)
 				// 正常关闭不打印错误
 				if !errors.Is(err, ErrBrowserClosed) {
-					slog.Error("cdpConn read error", "error", err)
+					c.log(slog.LevelError, "cdpConn read error", "error", err)
 				}
 				break
 			}

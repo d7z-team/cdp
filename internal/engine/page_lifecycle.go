@@ -127,7 +127,7 @@ func (p *Page) bind(initCtx, pageCtx context.Context, ws *CdpConn, manager *Brow
 		"Runtime.executionContextsCleared",
 		"Runtime.bindingCalled",
 	)
-	syncutil.Go(func() {
+	syncutil.Go(p.manager.Logger(), func() {
 		defer unsubscribe()
 		for event := range events {
 			if !manager.isCurrentManagedPage(p) {
@@ -173,7 +173,6 @@ func (p *Page) bind(initCtx, pageCtx context.Context, ws *CdpConn, manager *Brow
 			return fmt.Errorf("wait for executable page main frame: %w", err)
 		}
 	}
-	slog.Debug("page init", "page_id", p.ID)
 
 	return nil
 }
@@ -256,7 +255,7 @@ func (p *Page) handleRootPageEvent(event CDPResponse) {
 		}
 	case "Page.javascriptDialogOpening":
 		if err := p.handleJavaScriptDialogOpening(event.Params); err != nil && !errors.Is(err, ErrBrowserClosed) {
-			slog.Error("handle javascript dialog error", "error", err, "page_id", p.ID)
+			p.log(slog.LevelError, "handle javascript dialog error", "error", err, "page_id", p.ID)
 		}
 	case "Page.javascriptDialogClosed":
 		p.handleJavaScriptDialogClosed()
@@ -269,7 +268,7 @@ func (p *Page) handleRootPageEvent(event CDPResponse) {
 	case "Runtime.bindingCalled":
 		var bindingData binding.BindingCalledEvent
 		if err := event.ParamsUnmarshal(&bindingData); err != nil {
-			slog.Error("parse binding call", "error", err, "page_id", p.ID)
+			p.log(slog.LevelError, "parse binding call", "error", err, "page_id", p.ID)
 			return
 		}
 		handle := func() {
@@ -277,21 +276,21 @@ func (p *Page) handleRootPageEvent(event CDPResponse) {
 				return
 			}
 			if err := manager.handleBindingCalled(p, &bindingData); err != nil && !errors.Is(err, ErrBrowserClosed) {
-				slog.Error("handle binding call", "error", err, "page_id", p.ID)
+				p.log(slog.LevelError, "handle binding call", "error", err, "page_id", p.ID)
 			}
 		}
 		if bindingCallKind(bindingData.Payload) == "notify" {
 			p.enqueueBindingNotification(handle)
 		} else {
-			syncutil.Go(handle)
+			syncutil.Go(p.manager.Logger(), handle)
 		}
 	}
 }
 
 func (p *Page) reconcilePageRegistrationsAsync(reason string) {
-	syncutil.Go(func() {
+	syncutil.Go(p.manager.Logger(), func() {
 		if err := p.manager.reconcilePageRegistrations(p.ctx, p); err != nil && !errors.Is(err, ErrBrowserClosed) {
-			slog.Debug("reconcile page registrations failed", "page_id", p.ID, "reason", reason, "error", err)
+			p.log(slog.LevelDebug, "reconcile page registrations failed", "page_id", p.ID, "reason", reason, "error", err)
 		}
 	})
 }
@@ -320,7 +319,7 @@ func (p *Page) enqueueBindingNotification(handle func()) {
 	}
 	p.bindingNotifyRunning = true
 	p.bindingNotifyMu.Unlock()
-	syncutil.Go(func() {
+	syncutil.Go(p.manager.Logger(), func() {
 		for {
 			p.bindingNotifyMu.Lock()
 			if p.bindingNotifyClosed || len(p.bindingNotifyPending) == 0 {
@@ -360,7 +359,8 @@ func (p *Page) unbind() {
 			close(waiter)
 		}
 	}
-	p.CdpConn = nil
+	// The connection pointer is immutable after bind. Its canceled context marks
+	// it closed while in-flight runtime reconciliation may still read it.
 	p.bindingInstallMu.Lock()
 	p.installedBindings = nil
 	p.bindingInstallMu.Unlock()
@@ -380,7 +380,6 @@ func (p *Page) unbind() {
 	p.currentDialog = nil
 	p.signalJavaScriptDialogChangeLocked()
 	p.dialogLock.Unlock()
-	slog.Info("page destroy", "page_id", p.ID)
 }
 
 func (p *Page) closeRuntimeReady() {

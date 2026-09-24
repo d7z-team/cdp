@@ -7,6 +7,7 @@
   "type": "commonjs",
   "main": "webpack.config.js",
   "scripts": {
+    "test": "node --test internal/webassets/tests/*.test.cjs",
     "build": "webpack --config webpack.config.js"
   },
   "devDependencies": {

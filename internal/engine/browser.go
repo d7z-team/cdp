@@ -16,6 +16,7 @@ import (
 )
 
 type BrowserManager struct {
+	logger             *slog.Logger
 	runtimeDiagnostics bool
 	sessions           *syncutil.SyncMap[string, *Page]
 	client             *http.Client
@@ -120,6 +121,8 @@ func (a pageBindAttempt) discard(err error) {
 // BrowserManagerConfig configures BrowserManager behavior for pages bound
 // through a CDP connection.
 type BrowserManagerConfig struct {
+	Screen             ScreenConfig
+	Logger             *slog.Logger
 	RuntimeDiagnostics bool
 	// DefaultActionMode is inherited by pages when they are first bound.
 	// Empty values default to ActionModeStrict.
@@ -231,6 +234,7 @@ func ConnectManager(ctx, lifetime context.Context, u string, config BrowserManag
 		return nil, err
 	}
 	r := &BrowserManager{
+		logger:                    config.Logger,
 		runtimeDiagnostics:        config.RuntimeDiagnostics,
 		sessions:                  syncutil.NewSyncMap[string, *Page](),
 		client:                    http.DefaultClient,
@@ -309,9 +313,13 @@ func ConnectManager(ctx, lifetime context.Context, u string, config BrowserManag
 		return failSetup(fmt.Errorf("connect browser websocket: %w", err))
 	}
 	r.conn = ws
-	syncutil.Go(func() {
+	syncutil.Go(r.Logger(), func() {
 		r.watchLifecycle(lifetime, closed)
 	})
+
+	if err := r.verifyScreen(setupCtx, config.Screen); err != nil {
+		return failSetup(fmt.Errorf("initialize browser environment: %w", err))
+	}
 
 	// Subscribe before discovery so existing and newly created targets share one stream.
 	event, f, err := r.TargetSetDiscoverTargets(true)
@@ -327,10 +335,10 @@ func ConnectManager(ctx, lifetime context.Context, u string, config BrowserManag
 		return failSetup(err)
 	}
 
-	syncutil.Go(func() {
+	syncutil.Go(r.Logger(), func() {
 		defer f()
 		defer func() {
-			slog.Debug("browser disconnected")
+			r.log(slog.LevelDebug, "browser disconnected")
 		}()
 
 		// Discovery reports existing targets as well as newly created targets.

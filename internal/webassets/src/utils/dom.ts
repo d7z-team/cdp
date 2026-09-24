@@ -15,41 +15,28 @@ export function domReady(options: DomReadyOptions = {}): Promise<void> {
             return;
         }
 
-        const isReady = () => document.readyState === 'complete' || (document.readyState === 'interactive' && document.body);
-
-        if (isReady()) {
+        if (document.readyState === 'complete' || (document.readyState === 'interactive' && document.body)) {
             setTimeout(resolve, 0);
             return;
         }
 
-        // 设置超时处理
-        let timeoutId: ReturnType<typeof setTimeout> | null = null;
-
-        if (timeout > 0) {
-            timeoutId = setTimeout(() => {
-                const message = `DOM ready timeout after ${timeout}ms`;
-                if (forceResolve) {
-                    console.warn(`${message}, forcing resolve`);
-                    resolve();
-                } else {
-                    reject(new Error(message));
-                }
-
-                document.removeEventListener('DOMContentLoaded', handleLoad);
-                window.removeEventListener('load', handleLoad);
-            }, timeout);
-        }
-
-        const handleLoad = (): void => {
-            if (timeoutId) {
-                clearTimeout(timeoutId);
-                timeoutId = null;
-            }
-            resolve();
+        let timeoutId: ReturnType<typeof setTimeout> | undefined;
+        const finish = (error?: Error): void => {
+            clearTimeout(timeoutId);
+            document.removeEventListener('DOMContentLoaded', handleLoad);
+            window.removeEventListener('load', handleLoad);
+            if (error) reject(error);
+            else resolve();
         };
+        const handleLoad = (): void => finish();
 
         document.addEventListener('DOMContentLoaded', handleLoad, {once: true});
         window.addEventListener('load', handleLoad, {once: true});
+        if (timeout > 0) {
+            timeoutId = setTimeout(() => {
+                finish(forceResolve ? undefined : new Error(`DOM ready timeout after ${timeout}ms`));
+            }, timeout);
+        }
     });
 }
 

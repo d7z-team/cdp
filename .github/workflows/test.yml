@@ -29,7 +29,7 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
-      - run: make generate check-ts build-assets
+      - run: make generate check-ts test-ts build-assets
       - name: Check generated files are committed
         run: |
           changes=$(git status --porcelain -- internal/engine/callgen_core.go internal/webassets/src/bindings internal/webassets/dest)

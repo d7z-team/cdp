@@ -402,3 +402,35 @@ func TestBackForwardRestoredDocument(t *testing.T) {
 		t.Fatal("old context handle survived history navigation")
 	}
 }
+
+func TestFrameQueryRecoversBeforeClick(t *testing.T) {
+	if !browserEnabled {
+		t.Skip("set CDP_E2E_BROWSER=1")
+	}
+	p := openFixture(t, "/closed-shadow")
+	ctx := t.Context()
+	mustOK(p.Locator("#add-frame").Click(ctx))
+	button := p.FrameLocator("#shadow-frame").ByTestID("frame-btn")
+	mustOK(button.WaitForText(ctx, "frame-button", cdp.TextOptions{Exact: true}))
+	core := must(p.ExecutionContext(ctx, cdp.ExecutionContextOptions{World: cdp.WorldCore}))
+	// Fail one child query at the real runtime boundary, then restore transport.
+	// Resolution may retry; input must only be sent after the child is resolved.
+	mustOK(core.Eval(ctx, `
+		const bridge = window.__cdp_ffi.bridge;
+		const request = bridge.request;
+		bridge.request = function(channel, ...args) {
+			if (channel === 'selector.query') {
+				this.request = request;
+				return Promise.reject(new Error('child query temporarily unavailable'));
+			}
+			return request.call(this, channel, ...args);
+		};
+	`, nil))
+	mustOK(button.Click(ctx))
+	if got := must(button.TextContent(ctx)); got != "frame-clicked" {
+		t.Fatalf("child click result: %s", got)
+	}
+	if got := must(p.Locator("#count").TextContent(ctx)); got != "0" {
+		t.Fatalf("click reached parent shadow button: %s", got)
+	}
+}

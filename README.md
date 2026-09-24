@@ -6,7 +6,7 @@ CDP provides a native Go browser automation library and an embeddable MCP HTTP s
 
 ## Use as a Go library
 
-Requires Go 1.26 or newer and a Chromium-based browser. Page runtime bundles are embedded, so library consumers do not need Node.js.
+Requires Go 1.26 or newer and a Chromium-based browser. Headless launch requires Chrome 142+ for native virtual screen support. Page runtime bundles are embedded, so library consumers do not need Node.js.
 
 ```sh
 go get gopkg.d7z.net/cdp
@@ -47,7 +47,7 @@ go run ./cmd/cdp-mcp
 
 Connect an MCP client using Streamable HTTP at `http://127.0.0.1:3000/mcp`. The command manages a headless browser and provides a debug interface at `/debug`. It listens on loopback by default and has no built-in authentication.
 
-See the [MCP guide](docs/mcp.md) for configuration, diagnostics and embedding in your own HTTP server.
+See the [MCP guide](docs/mcp.md) for browser configuration, access control and HTTP embedding.
 
 ## Documentation
 
