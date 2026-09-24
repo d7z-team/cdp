@@ -13,36 +13,52 @@ import (
 	"time"
 
 	"gopkg.d7z.net/cdp"
+	harnessruntime "gopkg.d7z.net/cdp/e2e/harness/runtime"
 )
 
 func TestHeadlessScreenConfiguration(t *testing.T) {
 	if !browserEnabled {
 		t.Skip("set CDP_E2E_BROWSER=1")
 	}
-	for _, screen := range []cdp.ScreenOptions{{}, {Width: 1600, Height: 1000, ScaleFactor: 2}, {Width: 1920, Height: 1080, ScaleFactor: 1.25}} {
-		ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
-		browser, err := cdp.Launch(ctx, cdp.LaunchOptions{Screen: screen, WindowSize: cdp.WindowSize{Width: 1440, Height: 960}})
-		if err != nil {
-			cancel()
-			t.Fatal(err)
-		}
-		t.Cleanup(func() { _ = browser.Close(); cancel() })
-		page := must(browser.NewPage(ctx))
-		var actual struct {
-			Width, Height, OuterWidth, OuterHeight int
-			Scale                                  float64
-		}
-		mustOK(page.Eval(ctx, `return {Width:screen.width,Height:screen.height,OuterWidth:outerWidth,OuterHeight:outerHeight,Scale:devicePixelRatio}`, &actual))
-		width, height, scale := screen.Width, screen.Height, screen.ScaleFactor
-		if width == 0 {
-			width, height, scale = 1920, 1080, 1
-		}
-		// Fractional display scaling rounds Chromium window decorations to pixels.
-		if actual.Width != width || actual.Height != height || actual.Scale != scale || math.Abs(float64(actual.OuterWidth-1440)) > 2 || math.Abs(float64(actual.OuterHeight-960)) > 2 {
-			t.Errorf("screen=%+v", actual)
-		}
-		mustOK(browser.Close())
-		cancel()
+	for _, tc := range []struct {
+		name   string
+		screen cdp.ScreenOptions
+	}{
+		{name: "default"},
+		{name: "scale_2", screen: cdp.ScreenOptions{Width: 1600, Height: 1000, ScaleFactor: 2}},
+		{name: "scale_1.25", screen: cdp.ScreenOptions{Width: 1920, Height: 1080, ScaleFactor: 1.25}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(t.Context(), 30*time.Second)
+			defer cancel()
+			options := harnessruntime.BuildBrowserConfig(execBrowser.Config, "")
+			// This scenario exercises virtual displays, including in a headful suite.
+			options.Headful = false
+			options.Screen = tc.screen
+			browser, err := cdp.Launch(ctx, options)
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() {
+				if err := browser.Close(); err != nil {
+					t.Errorf("close screen test browser: %v", err)
+				}
+			})
+			page := must(browser.NewPage(ctx))
+			var actual struct {
+				Width, Height, OuterWidth, OuterHeight int
+				Scale                                  float64
+			}
+			mustOK(page.Eval(ctx, `return {Width:screen.width,Height:screen.height,OuterWidth:outerWidth,OuterHeight:outerHeight,Scale:devicePixelRatio}`, &actual))
+			width, height, scale := tc.screen.Width, tc.screen.Height, tc.screen.ScaleFactor
+			if width == 0 {
+				width, height, scale = 1920, 1080, 1
+			}
+			// Fractional display scaling rounds Chromium window decorations to pixels.
+			if actual.Width != width || actual.Height != height || actual.Scale != scale || math.Abs(float64(actual.OuterWidth-options.WindowSize.Width)) > 2 || math.Abs(float64(actual.OuterHeight-options.WindowSize.Height)) > 2 {
+				t.Errorf("screen=%+v", actual)
+			}
+		})
 	}
 }
 
