@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"gopkg.d7z.net/cdp"
+	harnessruntime "gopkg.d7z.net/cdp/e2e/harness/runtime"
 	"gopkg.d7z.net/cdp/mcpserver"
 )
 
@@ -134,9 +135,16 @@ func TestLaunchOwnershipAndProfileProtection(t *testing.T) {
 	}
 	ctx := context.Background()
 	profile := t.TempDir()
-	owner := must(cdp.Launch(ctx, cdp.LaunchOptions{UserDataDir: profile}))
-	defer owner.Close()
-	other, err := cdp.Launch(ctx, cdp.LaunchOptions{UserDataDir: profile})
+	options := harnessruntime.BuildBrowserConfig(execBrowser.Config, profile)
+	owner, err := cdp.Launch(ctx, options)
+	if err != nil {
+		t.Fatalf("launch profile owner: %v", err)
+	}
+	t.Cleanup(func() { _ = owner.Close() })
+	other, err := cdp.Launch(ctx, options)
+	if other != nil {
+		t.Cleanup(func() { _ = other.Close() })
+	}
 	if other != nil || !errors.Is(err, cdp.ErrProfileInUse) {
 		t.Fatalf("profile collision: %v %v", other, err)
 	}
